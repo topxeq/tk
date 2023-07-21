@@ -17,10 +17,10 @@ require (
 	github.com/topxeq/gods v0.0.0-20220125023913-b5718bb0c704
 	github.com/topxeq/goph v0.0.0-20230116054750-120b087d86fb
 	github.com/topxeq/mahonia v0.0.0-20190828060648-12b0599ddd1a
-	github.com/topxeq/regexpx v0.0.0-20200814082553-4bffc7d07029
-	github.com/topxeq/socks v0.0.0-20200812112322-24acb126b5f3
+	github.com/topxeq/regexpx v0.0.0-20230721063247-f118dbe089d7
+	github.com/topxeq/socks v0.0.0-20230721063359-4740c5e460e9
 	github.com/topxeq/uuid v0.0.0-20210318003930-0d149e412ca1
-	github.com/topxeq/xmlx v0.2.0
+	github.com/topxeq/xmlx v0.3.0
 	github.com/yeka/zip v0.0.0-20180914125537-d046722c6feb
 	golang.org/x/crypto v0.6.0
 	golang.org/x/net v0.7.0

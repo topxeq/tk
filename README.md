@@ -1,2 +1,2 @@
 # tk
-A golang toolkit.
+Toolkit with less dependency.

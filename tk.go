@@ -6136,7 +6136,7 @@ func (pA *TK) Plos(vA ...interface{}) {
 		fmt.Printf("(%T)%#v", v, v)
 	}
 
-	fmt.Print("\n")
+	fmt.Print("\n") // test
 }
 
 var Plos = TKX.Plos

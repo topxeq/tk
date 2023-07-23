@@ -23059,6 +23059,25 @@ func (pA *TK) NewCompactIterator(dataA interface{}, argsA ...interface{}) Iterat
 
 		return &CompactIterator{Type: 62, Data: nv, Current: startT, Step: ToInt(stepT, 1), Stop: stopT, Direction: dirT, Keys: keysT}
 
+	case *OrderedMap:
+		startT := ToInt(startT, 0)
+
+		lenT := nv.Len()
+
+		if startT <= -1 {
+			startT = lenT - 1
+		}
+
+		stopT := ToInt(stopT, 0)
+
+		if stopT <= -1 {
+			stopT = lenT
+		}
+
+		keysT := nv.GetKeys()
+
+		return &CompactIterator{Type: 82, Data: nv, Current: startT, Step: ToInt(stepT, 1), Stop: stopT, Direction: dirT, Keys: keysT}
+
 	}
 
 	valueT := reflect.ValueOf(dataA)
@@ -23105,7 +23124,7 @@ func (pA *TK) NewCompactIterator(dataA interface{}, argsA ...interface{}) Iterat
 var NewCompactIterator = TKX.NewCompactIterator
 
 type CompactIterator struct {
-	Type      int // 0: unknown, 1: int, 2: float64, 21: string, 22: []byte, 23: []rune, 31: []int, 32: []float64, 33: []string, 51: map[string]string, 52: map[string]int, 53: map[string]float64, 61: map[int]int, 62: map[int]string, 81: map[string]interface{}, 91: []interface{}, 92: []map[string]string, 93: []map[string]interface{}, 94: []*OrderedMap, 97: reflect array/slice, 98: reflect map
+	Type      int // 0: unknown, 1: int, 2: float64, 21: string, 22: []byte, 23: []rune, 31: []int, 32: []float64, 33: []string, 51: map[string]string, 52: map[string]int, 53: map[string]float64, 61: map[int]int, 62: map[int]string, 81: map[string]interface{}, 82: *OrderedMap, 91: []interface{}, 92: []map[string]string, 93: []map[string]interface{}, 94: []*OrderedMap, 97: reflect array/slice, 98: reflect map
 	Direction int // 0(default): >=, 1: <=, 2: >, 3: <, 4: ==
 
 	Count int
@@ -23467,7 +23486,6 @@ func (p *CompactIterator) Next() (int, interface{}, interface{}, bool) {
 		return p.Count - 1, p.Count - 1, item, true
 
 	case 51: // map[string]string
-		Pl("here51")
 		cv := p.Current.(int)
 		// stopT := p.Stop.(int)
 		// nilT := Undefined
@@ -23581,6 +23599,18 @@ func (p *CompactIterator) Next() (int, interface{}, interface{}, bool) {
 		keyT := p.Keys.([]string)[cv]
 
 		item := dataP[keyT]
+		p.Current = cv + p.Step.(int)
+		p.Count++
+
+		return p.Count - 1, keyT, item, true
+
+	case 82: // *OrderedMap
+		cv := p.Current.(int)
+		dataP := p.Data.(*OrderedMap)
+
+		keyT := p.Keys.([]interface{})[cv]
+
+		item, _ := dataP.Get(keyT)
 		p.Current = cv + p.Step.(int)
 		p.Count++
 

@@ -7471,17 +7471,30 @@ func (pA *TK) DataToBytes(dataA interface{}, optsA ...string) interface{} {
 		}
 	}
 
+	nv2, ok := dataA.(string)
+
+	if ok {
+		return []byte(nv2)
+	}
+
 	bufT := new(bytes.Buffer)
 
 	var errT error
 
-	_, ok := dataA.(int)
+	nv1, ok := dataA.(int)
 
 	if ok {
-		errT = binary.Write(bufT, defaultEndianT, uint64(dataA.(int)))
-	} else {
-		errT = binary.Write(bufT, defaultEndianT, dataA)
+		errT = binary.Write(bufT, defaultEndianT, uint64(nv1))
+
+		if errT != nil {
+			return errT
+		}
+
+		return bufT.Bytes()
+
 	}
+
+	errT = binary.Write(bufT, defaultEndianT, dataA)
 
 	if errT != nil {
 		return errT

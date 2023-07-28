@@ -16085,6 +16085,140 @@ func (pA *TK) RecordsToOrderedMapArray(recA interface{}) interface{} {
 
 var RecordsToOrderedMapArray = TKX.RecordsToOrderedMapArray
 
+func (pA *TK) RecordsToOrderedMapArrayMap(recA interface{}, keyA string) interface{} {
+	if recA == nil {
+		return fmt.Errorf("empty records")
+	}
+
+	nv1, ok := recA.([][]string)
+
+	if ok {
+		lenT := len(nv1)
+
+		if lenT < 1 {
+			return nil
+		}
+
+		lineLenT := len(nv1[0])
+
+		aryT := make(map[string]*OrderedMap)
+
+		for i := 1; i < lenT; i++ {
+			mapT := NewOrderedMap()
+
+			for j := 0; j < lineLenT; j++ {
+				mapT.Set(nv1[0][j], nv1[i][j])
+			}
+
+			aryT[mapT.GetString(keyA)] = mapT
+		}
+
+		return aryT
+	}
+
+	nv2, ok := recA.([][]interface{})
+
+	if ok {
+		lenT := len(nv2)
+
+		if lenT < 1 {
+			return nil
+		}
+
+		lineLenT := len(nv2[0])
+
+		aryT := make(map[string]*OrderedMap, lenT-1)
+
+		keysT := make([]string, lineLenT)
+
+		for i0 := 0; i0 < lineLenT; i0++ {
+			keysT[i0] = ToStr(nv2[0][i0])
+		}
+
+		for i := 1; i < lenT; i++ {
+			mapT := NewOrderedMap()
+
+			for j := 0; j < lineLenT; j++ {
+				mapT.Set(keysT[j], ToStr(nv2[i][j]))
+			}
+
+			aryT[mapT.GetString(keyA)] = mapT
+		}
+
+		return aryT
+	}
+
+	nv3, ok := recA.([]interface{})
+
+	if ok {
+		lenT := len(nv3)
+
+		if lenT < 1 {
+			return nil
+		}
+
+		nv3a, ok := nv3[0].([]interface{})
+
+		if ok {
+			// Pl("weird type: %T(%#v)", nv3[0], nv3[0])
+			// return nil
+			lineLenT := len(nv3a)
+
+			aryT := make(map[string]*OrderedMap, lenT-1)
+
+			keysT := make([]string, lineLenT)
+
+			for i0 := 0; i0 < lineLenT; i0++ {
+				keysT[i0] = ToStr(nv3a[i0])
+			}
+
+			for i := 1; i < lenT; i++ {
+				mapT := NewOrderedMap()
+
+				for j := 0; j < lineLenT; j++ {
+					mapT.Set(keysT[j], ToStr(nv3[i].([]interface{})[j]))
+				}
+
+				aryT[mapT.GetString(keyA)] = mapT
+			}
+
+			return aryT
+		}
+
+		nv3b, ok := nv3[0].([]string)
+
+		if ok {
+			lineLenT := len(nv3b)
+
+			aryT := make(map[string]*OrderedMap, lenT-1)
+
+			keysT := make([]string, lineLenT)
+
+			for i0 := 0; i0 < lineLenT; i0++ {
+				keysT[i0] = ToStr(nv3b[i0])
+			}
+
+			for i := 1; i < lenT; i++ {
+				mapT := NewOrderedMap()
+
+				for j := 0; j < lineLenT; j++ {
+					mapT.Set(keysT[j], ToStr(nv3[i].([]string)[j]))
+				}
+
+				aryT[mapT.GetString(keyA)] = mapT
+			}
+
+			return aryT
+		}
+
+	}
+
+	// Pl("unsupported type: %T(%#v)", recA, recA)
+	return fmt.Errorf("unsupported type: %T(%#v)", recA, recA)
+}
+
+var RecordsToOrderedMapArrayMap = TKX.RecordsToOrderedMapArrayMap
+
 // 文本编码相关 encoding related
 
 // ConvertToGB18030 转换UTF-8字符串为GB18030编码
@@ -18498,6 +18632,41 @@ func (pA *TK) TableToMSSMap(tableA [][]string, keyA string) map[string]map[strin
 }
 
 var TableToMSSMap = TKX.TableToMSSMap
+
+func (pA *TK) TableToMSSOrderedMap(tableA [][]string, keyA string) map[string]*OrderedMap {
+	if tableA == nil {
+		return map[string]*OrderedMap{}
+	}
+
+	lenT := len(tableA)
+
+	if lenT < 1 {
+		return map[string]*OrderedMap{}
+	}
+
+	// inLenT := len(tableA[0])
+
+	bufT := make(map[string]*OrderedMap, 0)
+
+	for i, v := range tableA {
+		if i == 0 {
+			continue
+		}
+
+		inBufT := NewOrderedMap()
+
+		for j, jv := range v {
+			inBufT.Set(tableA[0][j], jv)
+		}
+
+		bufT[inBufT.GetString(keyA)] = inBufT
+	}
+
+	return bufT
+
+}
+
+var TableToMSSOrderedMap = TKX.TableToMSSOrderedMap
 
 func (pA *TK) TableToMSSMapArray(tableA [][]string, keyA string) map[string][]map[string]string {
 	if tableA == nil {
@@ -24075,6 +24244,29 @@ func (om *OrderedMap) Get(key interface{}) (interface{}, bool) {
 		return pair.Value, present
 	}
 	return nil, false
+}
+
+func (om *OrderedMap) GetCompact(key interface{}) interface{} {
+	if pair, present := om.pairs[key]; present {
+		return pair.Value
+	}
+
+	return fmt.Errorf("key not found")
+}
+
+func (om *OrderedMap) GetQuick(key interface{}) interface{} {
+	if pair, present := om.pairs[key]; present {
+		return pair.Value
+	}
+
+	return Undefined
+}
+
+func (om *OrderedMap) GetString(key interface{}) string {
+	if pair, present := om.pairs[key]; present {
+		return ToStr(pair.Value)
+	}
+	return ""
 }
 
 func (om *OrderedMap) GetByIndex(idxA int) (interface{}, bool) {

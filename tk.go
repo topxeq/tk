@@ -21210,6 +21210,32 @@ func (p *SyncQueue) QuickGet() interface{} {
 	return nil
 }
 
+func (p *SyncQueue) QuickGetList() []interface{} {
+	var result []interface{} = nil
+	var b bool
+	var vT interface{}
+
+	p.Lock.Lock()
+
+	lenT := p.Items.Size()
+
+	result = make([]interface{}, lenT)
+
+	for i := 0; i < lenT; i++ {
+		vT, b = p.Items.Get(i)
+
+		if b {
+			result[i] = vT
+		} else {
+			result[i] = nil
+		}
+	}
+
+	p.Lock.Unlock()
+
+	return result
+}
+
 func (p *SyncQueue) Get() (interface{}, bool) {
 	var result interface{} = nil
 	var b bool

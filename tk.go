@@ -16085,7 +16085,141 @@ func (pA *TK) RecordsToOrderedMapArray(recA interface{}) interface{} {
 
 var RecordsToOrderedMapArray = TKX.RecordsToOrderedMapArray
 
-func (pA *TK) RecordsToOrderedMapArrayMap(recA interface{}, keyA string) interface{} {
+func (pA *TK) RecordsToMapStringMap(recA interface{}, keyA string) interface{} {
+	if recA == nil {
+		return fmt.Errorf("empty records")
+	}
+
+	nv1, ok := recA.([][]string)
+
+	if ok {
+		lenT := len(nv1)
+
+		if lenT < 1 {
+			return nil
+		}
+
+		lineLenT := len(nv1[0])
+
+		aryT := make(map[string]map[string]string, lenT-1)
+
+		for i := 1; i < lenT; i++ {
+			mapT := make(map[string]string)
+
+			for j := 0; j < lineLenT; j++ {
+				mapT[nv1[0][j]] = nv1[i][j]
+			}
+
+			aryT[mapT[keyA]] = mapT
+		}
+
+		return aryT
+	}
+
+	nv2, ok := recA.([][]interface{})
+
+	if ok {
+		lenT := len(nv2)
+
+		if lenT < 1 {
+			return nil
+		}
+
+		lineLenT := len(nv2[0])
+
+		aryT := make(map[string]map[string]string, lenT-1)
+
+		keysT := make([]string, lineLenT)
+
+		for i0 := 0; i0 < lineLenT; i0++ {
+			keysT[i0] = ToStr(nv2[0][i0])
+		}
+
+		for i := 1; i < lenT; i++ {
+			mapT := make(map[string]string)
+
+			for j := 0; j < lineLenT; j++ {
+				mapT[keysT[j]] = ToStr(nv2[i][j])
+			}
+
+			aryT[mapT[keyA]] = mapT
+		}
+
+		return aryT
+	}
+
+	nv3, ok := recA.([]interface{})
+
+	if ok {
+		lenT := len(nv3)
+
+		if lenT < 1 {
+			return nil
+		}
+
+		nv3a, ok := nv3[0].([]interface{})
+
+		if ok {
+			// Pl("weird type: %T(%#v)", nv3[0], nv3[0])
+			// return nil
+			lineLenT := len(nv3a)
+
+			aryT := make(map[string]map[string]string, lenT-1)
+
+			keysT := make([]string, lineLenT)
+
+			for i0 := 0; i0 < lineLenT; i0++ {
+				keysT[i0] = ToStr(nv3a[i0])
+			}
+
+			for i := 1; i < lenT; i++ {
+				mapT := make(map[string]string)
+
+				for j := 0; j < lineLenT; j++ {
+					mapT[keysT[j]] = ToStr(nv3[i].([]interface{})[j])
+				}
+
+				aryT[mapT[keyA]] = mapT
+			}
+
+			return aryT
+		}
+
+		nv3b, ok := nv3[0].([]string)
+
+		if ok {
+			lineLenT := len(nv3b)
+
+			aryT := make(map[string]map[string]string, lenT-1)
+
+			keysT := make([]string, lineLenT)
+
+			for i0 := 0; i0 < lineLenT; i0++ {
+				keysT[i0] = ToStr(nv3b[i0])
+			}
+
+			for i := 1; i < lenT; i++ {
+				mapT := make(map[string]string)
+
+				for j := 0; j < lineLenT; j++ {
+					mapT[keysT[j]] = ToStr(nv3[i].([]string)[j])
+				}
+
+				aryT[mapT[keyA]] = mapT
+			}
+
+			return aryT
+		}
+
+	}
+
+	// Pl("unsupported type: %T(%#v)", recA, recA)
+	return fmt.Errorf("unsupported type: %T(%#v)", recA, recA)
+}
+
+var RecordsToMapStringMap = TKX.RecordsToMapStringMap
+
+func (pA *TK) RecordsToOrderedMapStringMap(recA interface{}, keyA string) interface{} {
 	if recA == nil {
 		return fmt.Errorf("empty records")
 	}
@@ -16217,7 +16351,7 @@ func (pA *TK) RecordsToOrderedMapArrayMap(recA interface{}, keyA string) interfa
 	return fmt.Errorf("unsupported type: %T(%#v)", recA, recA)
 }
 
-var RecordsToOrderedMapArrayMap = TKX.RecordsToOrderedMapArrayMap
+var RecordsToOrderedMapStringMap = TKX.RecordsToOrderedMapStringMap
 
 // 文本编码相关 encoding related
 

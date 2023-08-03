@@ -7748,6 +7748,12 @@ func (pA *TK) ToStr(v interface{}) string {
 		return nv
 	case []uint8:
 		return string(nv)
+	case *strings.Builder:
+		return nv.String()
+	case *bytes.Buffer:
+		return string(nv.Bytes())
+	case strings.Builder:
+		return nv.String()
 	default:
 		return fmt.Sprintf("%v", v)
 	}

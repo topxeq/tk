@@ -15844,7 +15844,12 @@ func (pA *TK) RecordsToMapArray(recA interface{}) []map[string]string {
 		for i := 1; i < lenT; i++ {
 			mapT := make(map[string]string, lenT)
 
+			curLineLenT := len(nv1[i])
 			for j := 0; j < lineLenT; j++ {
+				if j >= curLineLenT {
+					mapT[nv1[0][j]] = ""
+					continue
+				}
 				mapT[nv1[0][j]] = nv1[i][j]
 			}
 
@@ -15876,7 +15881,12 @@ func (pA *TK) RecordsToMapArray(recA interface{}) []map[string]string {
 		for i := 1; i < lenT; i++ {
 			mapT := make(map[string]string, lenT)
 
+			curLineLenT := len(nv2[i])
 			for j := 0; j < lineLenT; j++ {
+				if j >= curLineLenT {
+					mapT[keysT[j]] = ""
+					continue
+				}
 				mapT[keysT[j]] = ToStr(nv2[i][j])
 			}
 
@@ -15913,7 +15923,12 @@ func (pA *TK) RecordsToMapArray(recA interface{}) []map[string]string {
 			for i := 1; i < lenT; i++ {
 				mapT := make(map[string]string, lenT)
 
+				curLineLenT := len(nv3[i].([]interface{}))
 				for j := 0; j < lineLenT; j++ {
+					if j >= curLineLenT {
+						mapT[keysT[j]] = ""
+						continue
+					}
 					mapT[keysT[j]] = ToStr(nv3[i].([]interface{})[j])
 				}
 
@@ -15939,7 +15954,12 @@ func (pA *TK) RecordsToMapArray(recA interface{}) []map[string]string {
 			for i := 1; i < lenT; i++ {
 				mapT := make(map[string]string, lenT)
 
+				curLineLenT := len(nv3[i].([]interface{}))
 				for j := 0; j < lineLenT; j++ {
+					if j >= curLineLenT {
+						mapT[keysT[j]] = ""
+						continue
+					}
 					mapT[keysT[j]] = ToStr(nv3[i].([]string)[j])
 				}
 
@@ -15978,7 +15998,12 @@ func (pA *TK) RecordsToOrderedMapArray(recA interface{}) interface{} {
 		for i := 1; i < lenT; i++ {
 			mapT := NewOrderedMap()
 
+			curLineLenT := len(nv1[i])
 			for j := 0; j < lineLenT; j++ {
+				if j >= curLineLenT {
+					mapT.Set(nv1[0][j], "")
+					continue
+				}
 				mapT.Set(nv1[0][j], nv1[i][j])
 			}
 
@@ -16010,7 +16035,12 @@ func (pA *TK) RecordsToOrderedMapArray(recA interface{}) interface{} {
 		for i := 1; i < lenT; i++ {
 			mapT := NewOrderedMap()
 
+			curLineLenT := len(nv2[i])
 			for j := 0; j < lineLenT; j++ {
+				if j >= curLineLenT {
+					mapT.Set(keysT[j], "")
+					continue
+				}
 				mapT.Set(keysT[j], ToStr(nv2[i][j]))
 			}
 
@@ -16047,7 +16077,12 @@ func (pA *TK) RecordsToOrderedMapArray(recA interface{}) interface{} {
 			for i := 1; i < lenT; i++ {
 				mapT := NewOrderedMap()
 
+				curLineLenT := len(nv3[i].([]interface{}))
 				for j := 0; j < lineLenT; j++ {
+					if j >= curLineLenT {
+						mapT.Set(keysT[j], "")
+						continue
+					}
 					mapT.Set(keysT[j], ToStr(nv3[i].([]interface{})[j]))
 				}
 
@@ -16073,7 +16108,12 @@ func (pA *TK) RecordsToOrderedMapArray(recA interface{}) interface{} {
 			for i := 1; i < lenT; i++ {
 				mapT := NewOrderedMap()
 
+				curLineLenT := len(nv3[i].([]interface{}))
 				for j := 0; j < lineLenT; j++ {
+					if j >= curLineLenT {
+						mapT.Set(keysT[j], "")
+						continue
+					}
 					mapT.Set(keysT[j], ToStr(nv3[i].([]string)[j]))
 				}
 

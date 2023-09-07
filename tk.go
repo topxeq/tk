@@ -4504,12 +4504,13 @@ func (pA *TK) CompareTimeString(str1A, str2A, formatA string) (int, error) {
 var CompareTimeString = TKX.CompareTimeString
 
 func (pA *TK) ToTime(timeA interface{}, defaultA ...interface{}) interface{} {
+	// Pl("ToTime: %#v, %#v", timeA, defaultA)
 	timeT, ok := timeA.(time.Time)
 	if ok {
 		return timeT
 	}
 
-	var defaultT interface{} = Errf("failed to convert to time: %#v", timeA)
+	var defaultT interface{} = Errf("failed to convert to time: (%T)%#v", timeA, timeA)
 	ifLocalT := true
 
 	formatT := ""

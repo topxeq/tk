@@ -17350,6 +17350,68 @@ func (pA *TK) ReflectCallMethod(vA interface{}, nameA string, argsA ...interface
 
 var ReflectCallMethod = TKX.ReflectCallMethod
 
+func (pA *TK) ReflectCallMethodQuick(vA interface{}, nameA string, argsA ...interface{}) []interface{} {
+	var rv1 reflect.Value
+
+	rv1 = reflect.ValueOf(vA)
+
+	// Pl("rv1: %T %#v %v", rv1, rv1, rv1)
+
+	rv2 := rv1.MethodByName(nameA)
+
+	if rv2.IsZero() {
+		return nil
+	}
+
+	// Pl("rv2: %T %#v %v", rv2, rv2, rv2)
+
+	lenT := len(argsA)
+
+	sl := make([]reflect.Value, 0, lenT)
+
+	for i := 0; i < lenT; i++ {
+		sl = append(sl, reflect.ValueOf(argsA[i]))
+	}
+
+	rrvT := rv2.Call(sl)
+
+	rvr := make([]interface{}, 0)
+
+	for _, v9 := range rrvT {
+		rvr = append(rvr, v9.Interface())
+	}
+
+	return rvr
+}
+
+var ReflectCallMethodQuick = TKX.ReflectCallMethodQuick
+
+func (pA *TK) ReflectCallFuncQuick(vA interface{}, argsA ...interface{}) []interface{} {
+	var rv1 reflect.Value
+
+	rv1 = reflect.ValueOf(vA)
+
+	lenT := len(argsA)
+
+	sl := make([]reflect.Value, 0, lenT)
+
+	for i := 0; i < lenT; i++ {
+		sl = append(sl, reflect.ValueOf(argsA[i]))
+	}
+
+	rrvT := rv1.Call(sl)
+
+	rvr := make([]interface{}, 0)
+
+	for _, v9 := range rrvT {
+		rvr = append(rvr, v9.Interface())
+	}
+
+	return rvr
+}
+
+var ReflectCallFuncQuick = TKX.ReflectCallFuncQuick
+
 func (pA *TK) ReflectGetMember(vA interface{}, argsA ...interface{}) (result interface{}) {
 	defer func() {
 		r := recover()

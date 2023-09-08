@@ -3806,6 +3806,29 @@ func (pA *TK) RegMatchX(strA, patternA string) bool {
 
 var RegMatchX = TKX.RegMatchX
 
+func (pA *TK) RegQuote(textA string) string {
+	// textT := regexpx.QuoteMeta(textA)
+
+	textT := strings.ReplaceAll(textA, "\\", "\\\\")
+
+	textT = strings.ReplaceAll(textT, "-", "\\-")
+	textT = strings.ReplaceAll(textT, ":", "\\:")
+	textT = strings.ReplaceAll(textT, "\"", "\\\"")
+	textT = strings.ReplaceAll(textT, "[", "\\[")
+	textT = strings.ReplaceAll(textT, "]", "\\]")
+	textT = strings.ReplaceAll(textT, "(", "\\(")
+	textT = strings.ReplaceAll(textT, ")", "\\)")
+	textT = strings.ReplaceAll(textT, "{", "\\{")
+	textT = strings.ReplaceAll(textT, "}", "\\}")
+	textT = strings.ReplaceAll(textT, "\t", "\\t")
+	textT = strings.ReplaceAll(textT, "\r", "\\r")
+	textT = strings.ReplaceAll(textT, "\n", "\\n")
+
+	return textT
+}
+
+var RegQuote = TKX.RegQuote
+
 // 随机数相关 random related
 
 var ifRandomizedG = false

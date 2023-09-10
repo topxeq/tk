@@ -7755,6 +7755,7 @@ func (pA *TK) Int64ToStr(intA int64) string {
 var Int64ToStr = TKX.Int64ToStr
 
 func (pA *TK) ToStr(v interface{}) string {
+	// Pl("ToStr: (%T) %#v", v, v)
 	switch nv := v.(type) {
 	case float64, float32:
 		tmps := fmt.Sprintf("%f", nv)

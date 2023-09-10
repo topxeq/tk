@@ -6603,6 +6603,12 @@ func (pA *TK) GetOSName() string {
 
 var GetOSName = TKX.GetOSName
 
+func (pA *TK) GetOSArch() string {
+	return runtime.GOARCH
+}
+
+var GetOSArch = TKX.GetOSArch
+
 func (pA *TK) GetCurrentDir() string {
 	strT, errT := os.Getwd()
 	if errT != nil {

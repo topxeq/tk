@@ -5847,6 +5847,40 @@ func (pA *TK) EnsureBasePath(nameA string) (string, error) {
 
 var EnsureBasePath = TKX.EnsureBasePath
 
+// EnsureBasePath make sure a base path in user's home directory for application is exists, otherwise create it
+// if failed, will try to create in the application path
+func (pA *TK) EnsureBasePathInHome(nameA string) string {
+	var basePathT string
+
+	nameT := strings.TrimSpace(nameA)
+
+	if nameT == "" {
+		return ErrStrf("empty path name")
+	}
+
+	homePathT, errT := os.UserHomeDir()
+
+	if errT != nil {
+		return ErrStrf("failed to get home path: %v", errT)
+	}
+
+	basePathT = filepath.Join(homePathT, nameT)
+
+	errT = EnsureMakeDirsE(basePathT)
+
+	if errT != nil {
+		return ErrStrf("failed to create path: %v", errT)
+	}
+
+	if !IfFileExists(basePathT) {
+		return ErrStrf("failed to create path: %v", basePathT)
+	}
+
+	return basePathT
+}
+
+var EnsureBasePathInHome = TKX.EnsureBasePathInHome
+
 // CreateTempFile dirA如果为空，则在系统临时目录下。patternA 可以是example或example*.txt这样
 func (pA *TK) CreateTempFile(dirA string, patternA string, optsA ...string) (string, error) {
 	content := []byte("")

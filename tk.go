@@ -1358,8 +1358,9 @@ func (pA *TK) EndsWithIgnoreCase(strA string, subStrA string) bool {
 
 var EndsWithIgnoreCase = TKX.EndsWithIgnoreCase
 
-// Trim 仅仅封装了strings.TrimSpace
+// Trim 仅仅封装了strings.TrimSpace，如果带有参数，则调用strings.Trim
 func (pA *TK) Trim(strA string, cutSetA ...string) string {
+	// Pl("Trim: %#v %#v", strA, cutSetA)
 	if len(cutSetA) < 1 {
 		return strings.TrimSpace(strA)
 	}
@@ -9040,6 +9041,8 @@ func (pA *TK) GetFileList(dirA string, argsA ...string) []map[string]string {
 	minSizeT := int64(GetSwitchWithDefaultIntValue(argsA, "-minSize=", -1))
 	maxSizeT := int64(GetSwitchWithDefaultIntValue(argsA, "-maxSize=", MAX_INT))
 
+	limitT := GetSwitchWithDefaultIntValue(argsA, "-limit=", 0)
+
 	sortT := GetSwitch(argsA, "-sort=", "")
 	sortKeyT := GetSwitch(argsA, "-sortKey=", "Time")
 
@@ -9058,7 +9061,13 @@ func (pA *TK) GetFileList(dirA string, argsA ...string) []map[string]string {
 
 	mapListT := make([]map[string]string, 0, 100)
 
+	countT := 0
+
 	errT = filepath.Walk(dirA, func(path string, f os.FileInfo, err error) error {
+		if limitT > 0 && countT >= limitT {
+			return nil
+		}
+
 		if verboseT {
 			Pln(path)
 		}
@@ -9082,9 +9091,18 @@ func (pA *TK) GetFileList(dirA string, argsA ...string) []map[string]string {
 										if err1T == nil {
 											if compactT {
 												mapListT = append(mapListT, map[string]string{"Abs": absPathT, "Size": Int64ToStr(f.Size()), "IsDir": "true"})
+												countT++
+												if limitT > 0 && countT >= limitT {
+													return filepath.SkipAll
+												}
 
 											} else {
 												mapListT = append(mapListT, map[string]string{"Path": path, "Abs": absPathT, "Ext": filepath.Ext(path), "Name": filepath.Base(path), "Size": Int64ToStr(f.Size()), "IsDir": "true", "Time": FormatTime(f.ModTime(), TimeFormatCompact), "Mode": fmt.Sprintf("%v", f.Mode())})
+												countT++
+												if limitT > 0 && countT >= limitT {
+													return filepath.SkipAll
+												}
+
 											}
 										}
 									}
@@ -9095,8 +9113,18 @@ func (pA *TK) GetFileList(dirA string, argsA ...string) []map[string]string {
 								if err1T == nil {
 									if compactT {
 										mapListT = append(mapListT, map[string]string{"Abs": absPathT, "IsDir": "true"})
+										countT++
+										if limitT > 0 && countT >= limitT {
+											return filepath.SkipAll
+										}
+
 									} else {
 										mapListT = append(mapListT, map[string]string{"Path": path, "Abs": absPathT, "Ext": filepath.Ext(path), "Name": filepath.Base(path), "Size": Int64ToStr(f.Size()), "IsDir": "true", "Time": FormatTime(f.ModTime(), TimeFormatCompact), "Mode": fmt.Sprintf("%v", f.Mode())})
+										countT++
+										if limitT > 0 && countT >= limitT {
+											return filepath.SkipAll
+										}
+
 									}
 								}
 							}
@@ -9120,8 +9148,18 @@ func (pA *TK) GetFileList(dirA string, argsA ...string) []map[string]string {
 											if err1T == nil {
 												if compactT {
 													mapListT = append(mapListT, map[string]string{"Abs": absPathT, "Size": Int64ToStr(f.Size()), "IsDir": "true"})
+													countT++
+													if limitT > 0 && countT >= limitT {
+														return filepath.SkipAll
+													}
+
 												} else {
 													mapListT = append(mapListT, map[string]string{"Path": path, "Abs": absPathT, "Ext": filepath.Ext(path), "Name": filepath.Base(path), "Size": Int64ToStr(f.Size()), "IsDir": "true", "Time": FormatTime(f.ModTime(), TimeFormatCompact), "Mode": fmt.Sprintf("%v", f.Mode())})
+													countT++
+													if limitT > 0 && countT >= limitT {
+														return filepath.SkipAll
+													}
+
 												}
 											}
 										}
@@ -9132,8 +9170,18 @@ func (pA *TK) GetFileList(dirA string, argsA ...string) []map[string]string {
 									if err1T == nil {
 										if compactT {
 											mapListT = append(mapListT, map[string]string{"Abs": absPathT, "Size": Int64ToStr(f.Size()), "IsDir": "true"})
+											countT++
+											if limitT > 0 && countT >= limitT {
+												return filepath.SkipAll
+											}
+
 										} else {
 											mapListT = append(mapListT, map[string]string{"Path": path, "Abs": absPathT, "Ext": filepath.Ext(path), "Name": filepath.Base(path), "Size": Int64ToStr(f.Size()), "IsDir": "true", "Time": FormatTime(f.ModTime(), TimeFormatCompact), "Mode": fmt.Sprintf("%v", f.Mode())})
+											countT++
+											if limitT > 0 && countT >= limitT {
+												return filepath.SkipAll
+											}
+
 										}
 									}
 								}
@@ -9172,8 +9220,18 @@ func (pA *TK) GetFileList(dirA string, argsA ...string) []map[string]string {
 
 				if compactT {
 					mapListT = append(mapListT, map[string]string{"Abs": absPathT, "Size": Int64ToStr(f.Size()), "IsDir": BoolToStr(f.IsDir())})
+					countT++
+					if limitT > 0 && countT >= limitT {
+						return filepath.SkipAll
+					}
+
 				} else {
 					mapListT = append(mapListT, map[string]string{"Path": path, "Abs": absPathT, "Ext": filepath.Ext(path), "Name": filepath.Base(path), "Size": Int64ToStr(f.Size()), "IsDir": BoolToStr(f.IsDir()), "Time": FormatTime(f.ModTime(), TimeFormatCompact), "Mode": fmt.Sprintf("%v", f.Mode())})
+					countT++
+					if limitT > 0 && countT >= limitT {
+						return filepath.SkipAll
+					}
+
 				}
 
 			}

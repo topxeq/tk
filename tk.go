@@ -2198,6 +2198,16 @@ func (p *Seq) Get() int {
 	return result
 }
 
+func (p *Seq) String() string {
+	var result int
+
+	p.MutexM.Lock()
+	result = p.ValueM
+	p.MutexM.Unlock()
+
+	return ToStr(result)
+}
+
 var AutoSeq = &Seq{}
 
 func (pA *TK) GetSeq() int {
@@ -6186,6 +6196,26 @@ func (pA *TK) Plo(vA ...interface{}) {
 }
 
 var Plo = TKX.Plo
+
+func (pA *TK) Plt(vA ...interface{}) {
+	lenT := len(vA)
+
+	if lenT < 1 {
+		fmt.Println()
+		return
+	}
+
+	if lenT == 1 {
+		fmt.Printf("(%T)%v\n", vA[0], vA[0])
+		return
+	}
+
+	for i, v := range vA {
+		fmt.Printf("[%v] (%T)%v\n", i, v, v)
+	}
+}
+
+var Plt = TKX.Plt
 
 func (pA *TK) Plos(vA ...interface{}) {
 	for i, v := range vA {
@@ -22120,6 +22150,17 @@ func (pA *TK) NewObject(argsA ...interface{}) interface{} {
 		return linkedhashset.New()
 	case "syncqueue":
 		return NewSyncQueue()
+	case "seq":
+		if lenT > 1 {
+			typeT := ToStr(argsA[1])
+
+			if typeT == "-global" {
+				return AutoSeq
+			}
+			// return fmt.Errorf(ToStr(argsA[1]), argsA[2:]...)
+		}
+
+		return NewSeq()
 	case "orderedmap":
 		return NewOrderedMap()
 	case "error", "err":

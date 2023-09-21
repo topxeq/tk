@@ -2198,6 +2198,16 @@ func (p *Seq) Get() int {
 	return result
 }
 
+func (p *Seq) GetCurrent() int {
+	var result int
+
+	p.MutexM.Lock()
+	result = p.ValueM
+	p.MutexM.Unlock()
+
+	return result
+}
+
 func (p *Seq) String() string {
 	var result int
 

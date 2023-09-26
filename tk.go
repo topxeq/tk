@@ -13177,6 +13177,32 @@ func (pA *TK) DownloadWebPageX(urlA string, optsA ...interface{}) string {
 
 var DownloadWebPageX = TKX.DownloadWebPageX
 
+func (pA *TK) GetWebHead(urlA string, optsA ...interface{}) interface{} {
+	respT, errT := http.Head(urlA)
+	if errT != nil {
+		return errT
+	}
+
+	return respT
+}
+
+var GetWebHead = TKX.GetWebHead
+
+func (pA *TK) UrlExists(urlA string, optsA ...interface{}) interface{} {
+	respT, errT := http.Head(urlA)
+	if errT != nil {
+		return errT
+	}
+
+	if respT.StatusCode != http.StatusOK {
+		return false
+	}
+
+	return true
+}
+
+var UrlExists = TKX.UrlExists
+
 func (pA *TK) GetWeb(urlA string, optsA ...interface{}) interface{} {
 	timeoutStrT := GetSwitchI(optsA, "-timeout=", "15")
 

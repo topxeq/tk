@@ -2980,6 +2980,8 @@ func (p *AnyQueue) Pick() interface{} {
 func (v AnyQueue) String() string {
 	var bufT strings.Builder
 
+	bufT.WriteString("[")
+
 	currentT := v.Head
 
 	for currentT != nil {
@@ -2988,6 +2990,7 @@ func (v AnyQueue) String() string {
 		currentT = currentT.Next
 	}
 
+	bufT.WriteString("]")
 	// rs := Spr("Head: %v, Tail: %v, Buf: %#v", v.Head, v.Tail, v)
 
 	return bufT.String()
@@ -17493,6 +17496,42 @@ var RenderMarkdown = TKX.RenderMarkdown
 
 // reflect related
 
+func (pA *TK) ReflectHasMethod(vA interface{}, nameA string) (result bool) {
+	defer func() {
+		r := recover()
+
+		if r != nil {
+			result = false
+			return
+		}
+	}()
+
+	var rv1 reflect.Value
+
+	switch nv := vA.(type) {
+	case *interface{}:
+		// Pl("hereree1")
+		rv1 = reflect.ValueOf(GetRef(nv))
+	default:
+		rv1 = reflect.ValueOf(vA)
+
+	}
+
+	// Pl("rv1: %T %#v %v", rv1, rv1, rv1)
+
+	rv2 := rv1.MethodByName(nameA)
+
+	if rv2.IsZero() {
+		result = false
+		return
+	}
+
+	result = true
+	return
+}
+
+var ReflectHasMethod = TKX.ReflectHasMethod
+
 func (pA *TK) ReflectCallMethod(vA interface{}, nameA string, argsA ...interface{}) (result interface{}) {
 	defer func() {
 		r := recover()
@@ -17517,6 +17556,11 @@ func (pA *TK) ReflectCallMethod(vA interface{}, nameA string, argsA ...interface
 	// Pl("rv1: %T %#v %v", rv1, rv1, rv1)
 
 	rv2 := rv1.MethodByName(nameA)
+
+	if rv2.IsZero() {
+		result = fmt.Errorf("unknown method: %v（%T/%v）", nameA, vA, vA)
+		return
+	}
 
 	// Pl("rv2: %T %#v %v", rv2, rv2, rv2)
 
@@ -17553,9 +17597,7 @@ func (pA *TK) ReflectCallMethod(vA interface{}, nameA string, argsA ...interface
 var ReflectCallMethod = TKX.ReflectCallMethod
 
 func (pA *TK) ReflectCallMethodQuick(vA interface{}, nameA string, argsA ...interface{}) []interface{} {
-	var rv1 reflect.Value
-
-	rv1 = reflect.ValueOf(vA)
+	var rv1 reflect.Value = reflect.ValueOf(vA)
 
 	// Pl("rv1: %T %#v %v", rv1, rv1, rv1)
 
@@ -17588,10 +17630,48 @@ func (pA *TK) ReflectCallMethodQuick(vA interface{}, nameA string, argsA ...inte
 
 var ReflectCallMethodQuick = TKX.ReflectCallMethodQuick
 
-func (pA *TK) ReflectCallFuncQuick(vA interface{}, argsA ...interface{}) []interface{} {
-	var rv1 reflect.Value
+func (pA *TK) ReflectCallMethodCompact(vA interface{}, nameA string, argsA ...interface{}) interface{} {
+	var rv1 reflect.Value = reflect.ValueOf(vA)
 
-	rv1 = reflect.ValueOf(vA)
+	// Pl("rv1: %T %#v %v", rv1, rv1, rv1)
+
+	rv2 := rv1.MethodByName(nameA)
+
+	if rv2.IsZero() {
+		return nil
+	}
+
+	// Pl("rv2: %T %#v %v", rv2, rv2, rv2)
+
+	lenT := len(argsA)
+
+	sl := make([]reflect.Value, 0, lenT)
+
+	for i := 0; i < lenT; i++ {
+		sl = append(sl, reflect.ValueOf(argsA[i]))
+	}
+
+	rrvT := rv2.Call(sl)
+
+	rvr := make([]interface{}, 0)
+
+	for _, v9 := range rrvT {
+		rvr = append(rvr, v9.Interface())
+	}
+
+	if len(rvr) < 1 {
+		return nil
+	} else if len(rvr) < 2 {
+		return rvr[0]
+	}
+
+	return rvr
+}
+
+var ReflectCallMethodCompact = TKX.ReflectCallMethodCompact
+
+func (pA *TK) ReflectCallFuncQuick(vA interface{}, argsA ...interface{}) []interface{} {
+	var rv1 reflect.Value = reflect.ValueOf(vA)
 
 	lenT := len(argsA)
 
@@ -17649,13 +17729,20 @@ func (pA *TK) ReflectGetMember(vA interface{}, argsA ...interface{}) (result int
 		if kindT == reflect.Struct {
 			rv1 := reflect.ValueOf(vr)
 
-			rv2 := rv1.FieldByName(ToStr(v2)).Interface()
+			rvMidT := rv1.FieldByName(ToStr(v2))
+
+			if rvMidT.IsZero() {
+				result = fmt.Errorf("unknown member: %v（%T/%v）.%v", vr, vr, kindT, v2)
+				return
+			}
+
+			rv2 := rvMidT.Interface()
 
 			vr = rv2
 			continue
 		}
 
-		result = fmt.Errorf("未知成员：%v（%T/%v）.%v", vr, vr, kindT, v2)
+		result = fmt.Errorf("unknown member: %v（%T/%v）.%v", vr, vr, kindT, v2)
 		return
 	}
 

@@ -1117,6 +1117,7 @@ func (pA *TK) LimitString(strA string, lenA int, optsA ...string) string {
 	}
 
 	suffixT := GetSwitch(optsA, "-suffix=", "...")
+	fromEndT := IfSwitchExists(optsA, "-end")
 
 	lenT := len(strA)
 
@@ -1124,6 +1125,10 @@ func (pA *TK) LimitString(strA string, lenA int, optsA ...string) string {
 
 	if diffT <= 0 {
 		return strA
+	}
+
+	if fromEndT {
+		return strA[lenT-lenA:lenT] + suffixT
 	}
 
 	return strA[:lenA] + suffixT

@@ -1085,6 +1085,32 @@ var SetFileVar = TKX.SetFileVar
 
 // 字符串相关函数 string related
 
+func (pA *TK) FindFirstDiffPosInStrs(str1A string, str2A string) int {
+	len1 := len(str1A)
+	len2 := len(str2A)
+
+	var lenT int
+
+	if len1 > len2 {
+		lenT = len2
+	} else {
+		lenT = len1
+	}
+
+	i := 0
+
+	for ; i <= lenT; i++ {
+		if str1A[i] != str2A[i] {
+			return i
+		}
+	}
+
+	return i
+
+}
+
+var FindFirstDiffPosInStrs = TKX.FindFirstDiffPosInStrs
+
 func (pA *TK) LimitString(strA string, lenA int, optsA ...string) string {
 	if lenA < 0 {
 		return strA

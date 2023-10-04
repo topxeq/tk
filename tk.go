@@ -5264,6 +5264,20 @@ func (pA *TK) ArrayContains(aryA interface{}, vA interface{}) bool {
 		return false
 	}
 
+	valueT := reflect.ValueOf(aryA)
+
+	kindT := valueT.Kind()
+
+	if kindT == reflect.Array || kindT == reflect.Slice {
+		lenT := valueT.Len()
+
+		for i := 0; i < lenT; i++ {
+			if vA == valueT.Index(i).Interface() {
+				return true
+			}
+		}
+	}
+
 	return false
 }
 
@@ -5842,6 +5856,18 @@ func (pA *TK) GetChar2() interface{} {
 
 var GetChar2 = TKX.GetChar2
 
+func (pA *TK) Sscanf(strA string, formatA string, argsA ...interface{}) interface{} {
+	rs, errT := fmt.Sscanf(strA, formatA, argsA...)
+
+	if errT != nil {
+		return errT
+	}
+
+	return rs
+}
+
+var Sscanf = TKX.Sscanf
+
 // GetOSArgs return os.Args
 func (pA *TK) GetOSArgs() []string {
 	return os.Args
@@ -6229,6 +6255,7 @@ func (pA *TK) Plo(vA ...interface{}) {
 		return
 	}
 
+	// Pl("Plo (%T)%#v", vA[0], vA[0])
 	if lenT == 1 {
 		fmt.Printf("(%T)%#v\n", vA[0], vA[0])
 		return
@@ -7540,7 +7567,13 @@ func (pA *TK) GetSystemEndianInt() int {
 
 var GetSystemEndianInt = TKX.GetSystemEndianInt
 
-func (pA *TK) CompareBytes(buf1 []byte, buf2 []byte) [][]int {
+func (pA *TK) CompareBytes(buf1 []byte, buf2 []byte, limitA ...int) [][]int {
+	limitT := 0
+
+	if len(limitA) > 0 {
+		limitT = limitA[0]
+	}
+
 	len1 := len(buf1)
 
 	len2 := len(buf2)
@@ -7556,7 +7589,13 @@ func (pA *TK) CompareBytes(buf1 []byte, buf2 []byte) [][]int {
 
 	diffBufT := make([][]int, 0, 100)
 
+	countT := 0
+
 	for i := 0; i < lenT; i++ {
+		if (limitT > 0) && (countT >= limitT) {
+			break
+		}
+
 		if i >= len1 {
 			c1 = 256
 		} else {
@@ -7576,6 +7615,7 @@ func (pA *TK) CompareBytes(buf1 []byte, buf2 []byte) [][]int {
 		if c1 != c2 {
 			diffBufT = append(diffBufT, []int{i, c1, c2})
 			// pl("%v(%v) - %v %v", i, i, c1, c2)
+			countT++
 		}
 
 	}
@@ -8342,8 +8382,13 @@ func (pA *TK) ToHex(vA interface{}) string {
 	case string:
 		rs = fmt.Sprintf("%x", vT)
 	default:
-		Plvx(vA)
-		rs = fmt.Sprintf("%x", vA)
+		rs1 := DataToBytes(vA)
+
+		if !IsError(rs1) {
+			rs = fmt.Sprintf("%x", rs1)
+		} else {
+			rs = fmt.Sprintf("%x", vA)
+		}
 	}
 
 	return rs
@@ -15046,6 +15091,10 @@ func (pA *TK) GetLogicalNotResult(nA interface{}) interface{} {
 var GetLogicalNotResult = TKX.GetLogicalNotResult
 
 func (pA *TK) GetBitNotResult(nA interface{}) interface{} {
+	// ^x    bitwise complement    is m ^ x  with m = "all bits set to 1" for unsigned x
+	// and  m = -1 for signed x
+	// so ^x is bitwise not of x
+
 	if nA == nil {
 		return true
 	}
@@ -15061,6 +15110,13 @@ func (pA *TK) GetBitNotResult(nA interface{}) interface{} {
 		v3 = ^nv
 	case int:
 		v3 = ^nv
+	case []byte:
+		bufT := make([]byte, len(nv))
+		for i := 0; i < len(nv); i++ {
+			bufT[i] = ^(nv[i])
+		}
+
+		v3 = bufT
 	case string:
 		buf, err := hex.DecodeString(nv)
 		if err != nil {
@@ -15780,6 +15836,42 @@ func (pA *TK) AdjustFloat(nA float64, digitA ...int) float64 {
 }
 
 var AdjustFloat = TKX.AdjustFloat
+
+// func NewBigFloatZero() *big.Float {
+// 	r := big.NewFloat(0.0)
+// 	r.SetPrec(256)
+// 	return r
+// }
+
+// func BigMul(a, b *big.Float) *big.Float {
+// 	return NewBigFloatZero().Mul(a, b)
+// }
+
+func (pA *TK) AdjustBigFloat(nA *big.Float, digitA ...int) *big.Float {
+	digitT := 10
+	if len(digitA) > 0 {
+		digitT = digitA[0]
+	}
+
+	if digitT < 0 {
+		digitT = 0
+	}
+
+	result := big.NewFloat(0).Set(nA)
+
+	for i := 0; i < digitT; i++ {
+		result = big.NewFloat(0).Mul(result, big.NewFloat(10))
+	}
+
+	n1, _ := result.Int64()
+	f1 := big.NewFloat(0).SetInt64(n1)
+
+	f2 := big.NewFloat(0).Quo(f1, big.NewFloat(math.Pow10(digitT)))
+
+	return f2
+}
+
+var AdjustBigFloat = TKX.AdjustBigFloat
 
 func (pA *TK) LimitPrecision(nA interface{}, digitA ...int) error {
 	digitT := 10
@@ -19522,8 +19614,32 @@ func (pA *TK) SetByRef(ppA interface{}, vA interface{}) (result error) {
 		*nv = ToBool(vA)
 		return nil
 
+	case *byte:
+		*nv = ToByte(vA, 0)
+		return nil
+
 	case *int:
 		*nv = ToInt(vA, 0)
+		return nil
+
+	case *int64:
+		*nv = int64(ToInt(vA, 0))
+		return nil
+
+	case *rune:
+		*nv = ToRune(vA, 0)
+		return nil
+
+	case *uint:
+		*nv = uint(ToInt(vA, 0))
+		return nil
+
+	case *uint64:
+		*nv = uint64(ToInt(vA, 0))
+		return nil
+
+	case *float32:
+		*nv = float32(ToFloat(vA, 0.0))
 		return nil
 
 	case *float64:
@@ -19532,6 +19648,10 @@ func (pA *TK) SetByRef(ppA interface{}, vA interface{}) (result error) {
 
 	case *string:
 		*nv = ToStr(vA)
+		return nil
+
+	case *error:
+		*nv = fmt.Errorf("%v", ToStr(vA))
 		return nil
 
 	case *interface{}:
@@ -19579,11 +19699,33 @@ func (pA *TK) GetRefValue(ppA interface{}) (result interface{}, err error) {
 		return nv.GetValue(), nil
 	case *bool:
 		return *nv, nil
+	case *byte:
+		return *nv, nil
 	case *int:
+		return *nv, nil
+	case *int64:
+		return *nv, nil
+	case *rune:
+		return *nv, nil
+	case *uint:
+		return *nv, nil
+	case *uint64:
+		return *nv, nil
+	case *float32:
 		return *nv, nil
 	case *float64:
 		return *nv, nil
 	case *string:
+		return *nv, nil
+	case *error:
+		return *nv, nil
+	case *[]string:
+		return *nv, nil
+	case *[]interface{}:
+		return *nv, nil
+	case *map[string]string:
+		return *nv, nil
+	case *map[string]interface{}:
 		return *nv, nil
 	case *interface{}:
 		return *nv, nil
@@ -19607,6 +19749,77 @@ func (pA *TK) GetRefValue(ppA interface{}) (result interface{}, err error) {
 }
 
 var GetRefValue = TKX.GetRefValue
+
+func (pA *TK) GetRefValueQuick(ppA interface{}) (result interface{}) {
+	defer func() {
+		r := recover()
+
+		if r != nil {
+			result = fmt.Errorf("faile to get ref value: %v(%v)", r, string(debug.Stack()))
+			return
+		}
+	}()
+
+	// Plvx(ppA)
+
+	switch nv := ppA.(type) {
+	case *FlexRef:
+		return nv.GetValue()
+	case *MapRef:
+		return nv.GetValue()
+	case *bool:
+		return *nv
+	case *byte:
+		// Pl("byte: %v", *nv)
+		return *nv
+	case *int:
+		return *nv
+	case *rune:
+		return *nv
+	case *int64:
+		return *nv
+	case *uint:
+		return *nv
+	case *uint64:
+		return *nv
+	case *float32:
+		return *nv
+	case *float64:
+		return *nv
+	case *string:
+		return *nv
+	case *error:
+		return *nv
+	case *[]string:
+		return *nv
+	case *[]interface{}:
+		return *nv
+	case *map[string]string:
+		return *nv
+	case *map[string]interface{}:
+		return *nv
+	case *interface{}:
+		return *nv
+	}
+
+	valueT := reflect.ValueOf(ppA)
+
+	kindT := valueT.Kind()
+
+	if kindT != reflect.Pointer {
+		return fmt.Errorf("not pointer type")
+	}
+
+	elemT := valueT.Elem()
+
+	if !elemT.CanInterface() {
+		return fmt.Errorf("value cannot convert to interface")
+	}
+
+	return elemT.Interface()
+}
+
+var GetRefValueQuick = TKX.GetRefValueQuick
 
 func (pA *TK) CheckErrorFunc(errA error, funcA func()) {
 	if errA != nil {
@@ -22226,14 +22439,36 @@ func (pA *TK) NewObject(argsA ...interface{}) interface{} {
 	switch typeT {
 	case "nil":
 		return nil
-	case "tk":
-		return NewTK()
+	case "undefined":
+		return new(UndefinedStruct)
+	case "bool":
+		return new(bool)
+	case "byte":
+		return new(byte)
+	case "int":
+		return new(int)
+	case "int64":
+		return new(int64)
+	case "rune", "int32":
+		return new(rune)
+	case "uint":
+		return new(uint)
+	case "uint64":
+		return new(uint64)
+	case "float", "float64":
+		return new(float64)
+	case "float32":
+		return new(float32)
 	case "string":
-		if lenT > 1 {
-			return CreateStringSimple(ToStr(argsA[1]))
-		}
+		return new(string)
+		// case "string":
+		// 	if lenT > 1 {
+		// 		return CreateStringSimple(ToStr(argsA[1]))
+		// 	}
 
-		return CreateStringEmpty()
+		// 	return CreateStringEmpty()
+	case "any", "interface{}":
+		return new(interface{})
 	case "bytesbuffer":
 		if lenT > 1 {
 			nv, ok := argsA[1].([]byte)
@@ -22345,6 +22580,8 @@ func (pA *TK) NewObject(argsA ...interface{}) interface{} {
 		}
 
 		return btree.NewWithIntComparator(ToInt(argsA[1]))
+	case "tk":
+		return NewTK()
 	}
 
 	return Errf("unknown object type: %v", typeT)
@@ -24837,6 +25074,19 @@ func (pA *OrderedMap) SortStringKeys(argsA ...string) error {
 	return nil
 }
 
+func (pA *OrderedMap) SortStringKeysByFunc(funcA func(i, j int) bool) error {
+	keysT := pA.GetStringKeys()
+
+	sort.SliceStable(keysT, funcA)
+
+	pA.list.Init()
+	for _, v := range keysT {
+		pA.pairs[v].element = pA.list.PushBack(pA.pairs[v])
+	}
+
+	return nil
+}
+
 // Get looks for the given key, and returns the value associated with it,
 // or nil if not found. The boolean it returns says whether the key is present in the map.
 func (om *OrderedMap) Get(key interface{}) (interface{}, bool) {
@@ -24888,6 +25138,60 @@ func (om *OrderedMap) GetByIndex(idxA int) (interface{}, bool) {
 	return nil, false
 }
 
+func (om *OrderedMap) GetKeyByIndex(idxA int) (interface{}, bool) {
+	if idxA < 0 || idxA >= om.list.Len() {
+		return nil, false
+	}
+
+	cntT := 0
+
+	for e := om.list.Front(); e != nil; e = e.Next() {
+		if cntT == idxA {
+			return e.Value.(*OrderedMapPair).Key, true
+		}
+
+		cntT++
+	}
+
+	return nil, false
+}
+
+func (om *OrderedMap) GetPairByIndex(idxA int) *OrderedMapPair {
+	if idxA < 0 || idxA >= om.list.Len() {
+		return nil
+	}
+
+	cntT := 0
+
+	for e := om.list.Front(); e != nil; e = e.Next() {
+		if cntT == idxA {
+			return e.Value.(*OrderedMapPair)
+		}
+
+		cntT++
+	}
+
+	return nil
+}
+
+func (om *OrderedMap) GetItemByIndex(idxA int) []interface{} {
+	if idxA < 0 || idxA >= om.list.Len() {
+		return nil
+	}
+
+	cntT := 0
+
+	for e := om.list.Front(); e != nil; e = e.Next() {
+		if cntT == idxA {
+			return []interface{}{e.Value.(*OrderedMapPair).Key, e.Value.(*OrderedMapPair).Value}
+		}
+
+		cntT++
+	}
+
+	return nil
+}
+
 // Load is an alias for Get, mostly to present an API similar to `sync.Map`'s.
 func (om *OrderedMap) Load(key interface{}) (interface{}, bool) {
 	return om.Get(key)
@@ -24913,10 +25217,30 @@ func (om *OrderedMap) Set(key interface{}, value interface{}) (interface{}, bool
 		Key:   key,
 		Value: value,
 	}
+
 	pair.element = om.list.PushBack(pair)
 	om.pairs[key] = pair
 
 	return nil, false
+}
+
+func (om *OrderedMap) SetByIndex(idxA int, value interface{}) error {
+	if idxA < 0 || idxA >= om.list.Len() {
+		return fmt.Errorf("index out of range: %v/%v", idxA, om.list.Len())
+	}
+
+	cntT := 0
+
+	for e := om.list.Front(); e != nil; e = e.Next() {
+		if cntT == idxA {
+			e.Value.(*OrderedMapPair).Value = value
+			return nil
+		}
+
+		cntT++
+	}
+
+	return fmt.Errorf("not found")
 }
 
 // Store is an alias for Set, mostly to present an API similar to `sync.Map`'s.
@@ -24932,7 +25256,39 @@ func (om *OrderedMap) Delete(key interface{}) (interface{}, bool) {
 		delete(om.pairs, key)
 		return pair.Value, true
 	}
+
 	return nil, false
+}
+
+func (om *OrderedMap) DeleteQuick(key interface{}) error {
+	if pair, present := om.pairs[key]; present {
+		om.list.Remove(pair.element)
+		delete(om.pairs, key)
+		return nil
+	}
+
+	return fmt.Errorf("not found")
+}
+
+func (om *OrderedMap) DeleteByIndex(idxA int) error {
+
+	if idxA < 0 || idxA >= om.list.Len() {
+		return fmt.Errorf("index out of range: %v/%v", idxA, om.list.Len())
+	}
+
+	cntT := 0
+
+	for e := om.list.Front(); e != nil; e = e.Next() {
+		if cntT == idxA {
+			delete(om.pairs, e.Value.(*OrderedMapPair).Key)
+			om.list.Remove(e)
+			return nil
+		}
+
+		cntT++
+	}
+
+	return fmt.Errorf("not found")
 }
 
 func (om *OrderedMap) Remove(key interface{}) (interface{}, bool) {

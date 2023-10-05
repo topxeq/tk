@@ -6400,6 +6400,9 @@ func (pA *TK) PlErr(errA error) {
 var PlErr = TKX.PlErr
 
 func (pA *TK) PlErrX(errA interface{}) {
+	if !IsErrX(errA) {
+		return
+	}
 
 	Pl("Error: %v", GetErrStrX(errA))
 }
@@ -6783,6 +6786,12 @@ func (pA *TK) GetHomeDir() string {
 }
 
 var GetHomeDir = TKX.GetHomeDir
+
+func (pA *TK) GetTempDir() string {
+	return os.TempDir()
+}
+
+var GetTempDir = TKX.GetTempDir
 
 func (pA *TK) GetApplicationPath() string {
 	file, _ := exec.LookPath(os.Args[0])
@@ -12879,6 +12888,44 @@ var GetDebug = TKX.GetDebug
 
 // http/web service related
 
+func (pA *TK) NewStaticWebHandler(pathA string) interface{} {
+	if !IfFileExists(pathA) || !IsDirectory(pathA) {
+		return fmt.Errorf("dir not exists")
+	}
+
+	var staticFST http.Handler = http.FileServer(http.Dir(pathA))
+
+	serveStaticDirHandlerT := func(w http.ResponseWriter, r *http.Request) {
+		old := r.URL.Path
+
+		// tk.Pl("urlPath: %v", r.URL.Path)
+
+		name := filepath.Join(pathA, path.Clean(old))
+
+		// tk.Pl("name: %v", name)
+
+		info, err := os.Lstat(name)
+		if err == nil {
+			if !info.IsDir() {
+				staticFST.ServeHTTP(w, r)
+				// http.ServeFile(w, r, name)
+			} else {
+				if IfFileExists(filepath.Join(name, "index.html")) {
+					staticFST.ServeHTTP(w, r)
+				} else {
+					http.NotFound(w, r)
+				}
+			}
+		} else {
+			http.NotFound(w, r)
+		}
+	}
+
+	return serveStaticDirHandlerT
+}
+
+var NewStaticWebHandler = TKX.NewStaticWebHandler
+
 func (pA *TK) SetResponseHeader(resA http.ResponseWriter, keyA string, valueA string) error {
 	resA.Header().Set(keyA, valueA)
 
@@ -18941,6 +18988,10 @@ func (pA *TK) GetErrStrX(vA interface{}) string {
 	nv1, ok := vA.(error)
 
 	if ok {
+		if nv1 == nil {
+			return ""
+		}
+
 		return nv1.Error()
 	}
 
@@ -22580,6 +22631,12 @@ func (pA *TK) NewObject(argsA ...interface{}) interface{} {
 		}
 
 		return btree.NewWithIntComparator(ToInt(argsA[1]))
+	case "statichttphandler", "staticwebhandler":
+		if lenT < 2 {
+			return Errf("not enough parameters")
+		}
+
+		return NewStaticWebHandler(ToStr(argsA[1]))
 	case "tk":
 		return NewTK()
 	}

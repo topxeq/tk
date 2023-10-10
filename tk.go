@@ -7949,7 +7949,9 @@ func (pA *TK) ToStr(v interface{}) string {
 		return IntToStr(nv)
 	case string:
 		return nv
-	case []uint8:
+	case []byte:
+		return string(nv)
+	case []rune:
 		return string(nv)
 	case *strings.Builder:
 		return nv.String()
@@ -17902,8 +17904,14 @@ func (pA *TK) ReflectGetMember(vA interface{}, argsA ...interface{}) (result int
 			rvMidT := rv1.FieldByName(ToStr(v2))
 
 			if rvMidT.IsZero() {
-				result = fmt.Errorf("unknown member: %v（%T/%v）.%v", vr, vr, kindT, v2)
-				return
+
+				rvMidT = rv1.MethodByName(ToStr(v2))
+
+				if rvMidT.IsZero() {
+
+					result = fmt.Errorf("unknown member: %v（%T/%v）.%v", vr, vr, kindT, v2)
+					return
+				}
 			}
 
 			rv2 := rvMidT.Interface()

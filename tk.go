@@ -6804,6 +6804,18 @@ func (pA *TK) GetApplicationPath() string {
 
 var GetApplicationPath = TKX.GetApplicationPath
 
+func (pA *TK) GetFileAbs(fileA string) string {
+	pathT, errT := filepath.Abs(fileA)
+
+	if errT != nil {
+		return ErrToErrStr(errT)
+	}
+
+	return pathT
+}
+
+var GetFileAbs = TKX.GetFileAbs
+
 func (pA *TK) EnsureMakeDirs(pathA string) string {
 	if !IfFileExists(pathA) {
 		os.MkdirAll(pathA, 0777)
@@ -12207,6 +12219,7 @@ func (pA *TK) EncryptStringByTXDEF(strA string, codeA ...string) string {
 var EncryptStringByTXDEF = TKX.EncryptStringByTXDEF
 
 func (pA *TK) DecryptStringByTXDEF(strA string, codeA ...string) string {
+	Plvsr(strA, codeA)
 	if strA == "" {
 		return ""
 	}
@@ -17809,7 +17822,7 @@ func (pA *TK) ReflectCallMethodCompact(vA interface{}, nameA string, argsA ...in
 
 	rv2 := rv1.MethodByName(nameA)
 
-	if rv2.IsZero() {
+	if !rv2.IsValid() || rv2.IsZero() {
 		return nil
 	}
 
@@ -17866,6 +17879,36 @@ func (pA *TK) ReflectCallFuncQuick(vA interface{}, argsA ...interface{}) []inter
 
 var ReflectCallFuncQuick = TKX.ReflectCallFuncQuick
 
+func (pA *TK) ReflectCallFuncCompact(vA interface{}, argsA ...interface{}) interface{} {
+	var rv1 reflect.Value = reflect.ValueOf(vA)
+
+	lenT := len(argsA)
+
+	sl := make([]reflect.Value, 0, lenT)
+
+	for i := 0; i < lenT; i++ {
+		sl = append(sl, reflect.ValueOf(argsA[i]))
+	}
+
+	rrvT := rv1.Call(sl)
+
+	rvr := make([]interface{}, 0)
+
+	for _, v9 := range rrvT {
+		rvr = append(rvr, v9.Interface())
+	}
+
+	if len(rvr) < 1 {
+		return nil
+	} else if len(rvr) < 2 {
+		return rvr[0]
+	}
+
+	return rvr
+}
+
+var ReflectCallFuncCompact = TKX.ReflectCallFuncCompact
+
 func (pA *TK) ReflectGetMember(vA interface{}, argsA ...interface{}) (result interface{}) {
 	defer func() {
 		r := recover()
@@ -17903,15 +17946,13 @@ func (pA *TK) ReflectGetMember(vA interface{}, argsA ...interface{}) (result int
 
 			rvMidT := rv1.FieldByName(ToStr(v2))
 
-			if rvMidT.IsZero() {
+			if !rvMidT.IsValid() || rvMidT.IsZero() {
+				// rvMidT = rv1.MethodByName(ToStr(v2))
 
-				rvMidT = rv1.MethodByName(ToStr(v2))
-
-				if rvMidT.IsZero() {
-
-					result = fmt.Errorf("unknown member: %v（%T/%v）.%v", vr, vr, kindT, v2)
-					return
-				}
+				// if !rvMidT.IsValid() || rvMidT.IsZero() {
+				result = fmt.Errorf("nil or unknown member: %v（%T/%v）.%v", vr, vr, kindT, v2)
+				return
+				// }
 			}
 
 			rv2 := rvMidT.Interface()
@@ -17929,6 +17970,64 @@ func (pA *TK) ReflectGetMember(vA interface{}, argsA ...interface{}) (result int
 }
 
 var ReflectGetMember = TKX.ReflectGetMember
+
+func (pA *TK) ReflectGetMethod(vA interface{}, argsA ...interface{}) (result interface{}) {
+	defer func() {
+		r := recover()
+
+		if r != nil {
+			result = fmt.Errorf("%v([%T/%v/%v->%v] %v)", r, vA, reflect.TypeOf(vA), reflect.TypeOf(vA).Kind(), argsA, vA)
+			return
+		}
+	}()
+
+	var vr interface{} = vA
+
+	for _, v2 := range argsA {
+
+		typeT := reflect.TypeOf(vr)
+
+		kindT := typeT.Kind()
+
+		// tk.Pl("kind: %v", kindT)
+
+		if kindT == reflect.Ptr {
+			vrf := reflect.ValueOf(vr).Elem()
+
+			kindT = vrf.Kind()
+
+			// tk.Pl("vrf: %v, kind: %v", vrf, kindT)
+
+			if kindT == reflect.Struct {
+				vr = vrf.Interface()
+			}
+		}
+
+		if kindT == reflect.Struct {
+			rv1 := reflect.ValueOf(vr)
+
+			rvMidT := rv1.MethodByName(ToStr(v2))
+
+			if !rvMidT.IsValid() || rvMidT.IsZero() {
+				result = fmt.Errorf("nil or unknown method: %v（%T/%v）.%v", vr, vr, kindT, v2)
+				return
+			}
+
+			rv2 := rvMidT.Interface()
+
+			vr = rv2
+			continue
+		}
+
+		result = fmt.Errorf("unknown method: %v（%T/%v）.%v", vr, vr, kindT, v2)
+		return
+	}
+
+	result = vr
+	return
+}
+
+var ReflectGetMethod = TKX.ReflectGetMethod
 
 func (pA *TK) ReflectCallMethodSlice(vA interface{}, nameA string, argsA ...interface{}) (result interface{}) {
 	defer func() {
@@ -18934,6 +19033,40 @@ func (pA *TK) IsNilOrEmpty(v interface{}) bool {
 }
 
 var IsNilOrEmpty = TKX.IsNilOrEmpty
+
+func (pA *TK) IsNilOrErrX(v interface{}) bool {
+	if v == nil {
+		return true
+	}
+
+	switch nv := v.(type) {
+	case nil:
+		return true
+	case string:
+		if strings.HasPrefix(nv, "TXERROR:") {
+			return true
+		}
+	case error:
+		if nv != nil {
+			return true
+		}
+	case *UndefinedStruct:
+		return true
+	case UndefinedStruct:
+		return true
+	default:
+		tmps := fmt.Sprintf("%v", v)
+
+		if tmps == "<nil>" {
+			return true
+		}
+
+	}
+
+	return false
+}
+
+var IsNilOrErrX = TKX.IsNilOrErrX
 
 func (pA *TK) TrimSafely(vA interface{}, defaultA ...string) string {
 	var defaultT string = ""
@@ -22655,6 +22788,7 @@ func (pA *TK) NewObject(argsA ...interface{}) interface{} {
 var NewObject = TKX.NewObject
 
 var MimeTypes = map[string]string{
+	"":                         "application/octet-stream",
 	"123":                      "application/vnd.lotus-1-2-3",
 	"3dml":                     "text/vnd.in3d.3dml",
 	"3ds":                      "image/x-3ds",

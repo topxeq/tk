@@ -10137,6 +10137,10 @@ var RestoreLineEnds = TKX.RestoreLineEnds
 
 func (pA *TK) BytesStartsWith(dataA []byte, subA interface{}) bool {
 	// Plo(dataA, subA)
+	if dataA == nil || len(dataA) < 1 {
+		return false
+	}
+
 	switch nv := subA.(type) {
 	case []byte:
 		return bytes.HasPrefix(dataA, nv)
@@ -10161,6 +10165,10 @@ func (pA *TK) BytesStartsWith(dataA []byte, subA interface{}) bool {
 var BytesStartsWith = TKX.BytesStartsWith
 
 func (pA *TK) BytesEndsWith(dataA []byte, subA interface{}) bool {
+	if dataA == nil || len(dataA) < 1 {
+		return false
+	}
+
 	switch nv := subA.(type) {
 	case []byte:
 		return bytes.HasSuffix(dataA, nv)

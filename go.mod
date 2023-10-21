@@ -23,6 +23,7 @@ require (
 	github.com/topxeq/xmlx v0.3.0
 	github.com/yeka/zip v0.0.0-20180914125537-d046722c6feb
 	golang.org/x/crypto v0.6.0
+	golang.org/x/image v0.13.0
 	golang.org/x/net v0.7.0
 	golang.org/x/term v0.5.0
 )
@@ -44,7 +45,7 @@ require (
 	github.com/topxeq/countingwriter v0.0.0-20230115115152-84660be6de09 // indirect
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
 	golang.org/x/sys v0.5.0 // indirect
-	golang.org/x/text v0.7.0 // indirect
+	golang.org/x/text v0.13.0 // indirect
 )
 
 require (

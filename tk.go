@@ -12219,7 +12219,6 @@ func (pA *TK) EncryptStringByTXDEF(strA string, codeA ...string) string {
 var EncryptStringByTXDEF = TKX.EncryptStringByTXDEF
 
 func (pA *TK) DecryptStringByTXDEF(strA string, codeA ...string) string {
-	Plvsr(strA, codeA)
 	if strA == "" {
 		return ""
 	}

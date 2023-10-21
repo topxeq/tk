@@ -10143,13 +10143,32 @@ func (pA *TK) BytesStartsWith(dataA []byte, subA interface{}) bool {
 
 	switch nv := subA.(type) {
 	case []byte:
+		if len(dataA) < len(nv) {
+			return false
+		}
+
 		return bytes.HasPrefix(dataA, nv)
 	case []rune:
-		return bytes.HasPrefix(dataA, []byte(string(nv)))
+		nv1 := []byte(string(nv))
+		if len(dataA) < len(nv1) {
+			return false
+		}
+
+		return bytes.HasPrefix(dataA, nv1)
 	case string:
-		return bytes.HasPrefix(dataA, []byte(nv))
+		nv1 := []byte(nv)
+		if len(dataA) < len(nv1) {
+			return false
+		}
+
+		return bytes.HasPrefix(dataA, nv1)
 	case []interface{}:
 		lenT := len(nv)
+
+		if len(dataA) < lenT {
+			return false
+		}
+
 		bufT := make([]byte, lenT)
 
 		for i := 0; i < lenT; i++ {
@@ -10171,13 +10190,32 @@ func (pA *TK) BytesEndsWith(dataA []byte, subA interface{}) bool {
 
 	switch nv := subA.(type) {
 	case []byte:
+		if len(dataA) < len(nv) {
+			return false
+		}
+
 		return bytes.HasSuffix(dataA, nv)
 	case []rune:
-		return bytes.HasSuffix(dataA, []byte(string(nv)))
+		nv1 := []byte(string(nv))
+		if len(dataA) < len(nv1) {
+			return false
+		}
+
+		return bytes.HasSuffix(dataA, nv1)
 	case string:
-		return bytes.HasSuffix(dataA, []byte(nv))
+		nv1 := []byte(nv)
+		if len(dataA) < len(nv1) {
+			return false
+		}
+
+		return bytes.HasSuffix(dataA, nv1)
 	case []interface{}:
 		lenT := len(nv)
+
+		if len(dataA) < lenT {
+			return false
+		}
+
 		bufT := make([]byte, lenT)
 
 		for i := 0; i < lenT; i++ {
@@ -11879,16 +11917,20 @@ func (pA *TK) EncryptDataByTXDEF(srcDataA []byte, codeA ...string) []byte {
 	addHeadT := false
 
 	if (codeA != nil) && (len(codeA) > 0) {
-		codeT = codeA[0]
+		codeT = GetParam(codeA, 0, "") // codeA[0]
 
-		if len(codeA) > 1 {
-			addHeadT = IfSwitchExists(codeA[1:], "-addHead")
-		}
+		// if len(codeA) > 1 {
+		addHeadT = IfSwitchExists(codeA, "-addHead")
+		// }
+
+		codeT = GetSwitch(codeA, "-code=", codeT)
 	}
 
 	if codeT == "" {
 		codeT = "topxeq"
 	}
+
+	// Pl("code: %v, addHead: %v", codeT, addHeadT)
 
 	codeBytes := []byte(codeT)
 	codeLen := len(codeBytes)
@@ -12172,7 +12214,9 @@ func (pA *TK) DecryptDataByTXDEF(srcDataA []byte, codeA ...string) []byte {
 	codeT := ""
 
 	if (codeA != nil) && (len(codeA) > 0) {
-		codeT = codeA[0]
+		codeT = GetParam(codeA, 0, "") // codeA[0]
+
+		codeT = GetSwitch(codeA, "-code=", codeT)
 	}
 
 	if codeT == "" {
@@ -27640,3 +27684,21 @@ func (pA *TK) ThumbImage(imgA image.Image, maxWidthA int, maxHeightA int) image.
 }
 
 var ThumbImage = TKX.ThumbImage
+
+func (pA *TK) NewImage(argsA ...string) image.Image {
+	widthT := ToInt(GetSwitch(argsA, "-width=", "100"), 100)
+	heightT := ToInt(GetSwitch(argsA, "-height=", "100"), 100)
+
+	colorT := GetSwitch(argsA, "-color=", "#FFFFFF")
+
+	if colorT == "" {
+
+	}
+
+	imgT := image.NewRGBA(image.Rectangle{Min: image.Point{X: 0, Y: 0}, Max: image.Point{X: widthT, Y: heightT}})
+
+	return imgT
+
+}
+
+var NewImage = TKX.NewImage

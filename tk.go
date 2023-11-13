@@ -13502,6 +13502,7 @@ func (pA *TK) UrlExists(urlA string, optsA ...interface{}) interface{} {
 var UrlExists = TKX.UrlExists
 
 func (pA *TK) GetWeb(urlA string, optsA ...interface{}) interface{} {
+	// Pl("%#v", optsA)
 	timeoutStrT := GetSwitchI(optsA, "-timeout=", "15")
 
 	encodingT := GetSwitchI(optsA, "-encoding=", "")

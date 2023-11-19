@@ -3781,6 +3781,37 @@ func (pA *TK) RegFindAllIndexX(strA, patternA string) [][]int {
 
 var RegFindAllIndexX = TKX.RegFindAllIndexX
 
+func (pA *TK) RegFindAllByGroupIndexX(strA, patternA string, groupA int) [][]int {
+	regexpT, errT := regexpx.Compile(patternA)
+
+	if errT != nil {
+		return nil
+	}
+
+	rT := regexpT.FindAllStringSubmatchIndex(strA, -1)
+	if rT == nil {
+		return nil
+	}
+
+	findsT := make([][]int, 0, 10)
+
+	for _, v := range rT {
+		if len(v) < (groupA+1)*2 {
+			continue
+		}
+
+		findsT = append(findsT, []int{v[groupA*2], v[groupA*2+1]})
+	}
+
+	if len(findsT) < 0 {
+		return nil
+	}
+
+	return findsT
+}
+
+var RegFindAllByGroupIndexX = TKX.RegFindAllByGroupIndexX
+
 func (pA *TK) RegFindFirstGroupsIndexX(strA, patternA string) []int {
 	regexpT, errT := regexpx.Compile(patternA)
 
@@ -3794,6 +3825,24 @@ func (pA *TK) RegFindFirstGroupsIndexX(strA, patternA string) []int {
 }
 
 var RegFindFirstGroupsIndexX = TKX.RegFindFirstGroupsIndexX
+
+func (pA *TK) RegFindFirstGroupIndexX(strA, patternA string, groupA int) []int {
+	regexpT, errT := regexpx.Compile(patternA)
+
+	if errT != nil {
+		return nil
+	}
+
+	rT := regexpT.FindStringSubmatchIndex(strA)
+
+	if len(rT) < (groupA+1)*2 {
+		return nil
+	}
+
+	return []int{rT[groupA*2], rT[groupA*2+1]}
+}
+
+var RegFindFirstGroupIndexX = TKX.RegFindFirstGroupIndexX
 
 func (pA *TK) RegStartsWith(strA, patternA string) bool {
 	startT, _ := RegFindFirstIndex(strA, patternA)

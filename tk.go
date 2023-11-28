@@ -27497,6 +27497,10 @@ func (p *TK) CenterEnlargeImage(imgA image.Image, optsA ...string) image.Image {
 	toWidthT := ToInt(GetSwitch(optsA, "-width=", "256"), 256)
 	toHeightT := ToInt(GetSwitch(optsA, "-height=", "256"), 256)
 
+	if toWidthT <= widthT && toHeightT <= heightT {
+		return imgA
+	}
+
 	colorStrT := GetSwitch(optsA, "-color=", "#000000")
 
 	if colorStrT == "" {

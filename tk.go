@@ -22985,6 +22985,12 @@ func (pA *TK) NewObject(argsA ...interface{}) interface{} {
 		}
 
 		return NewStaticWebHandler(ToStr(argsA[1]))
+	case "image":
+		// if lenT < 2 {
+		// 	return Errf("not enough parameters")
+		// }
+
+		return NewImage(AnyArrayToStringArray(argsA[1:])...)
 	case "tk":
 		return NewTK()
 	}
@@ -27484,6 +27490,57 @@ func resizeNearest(width, height uint, scaleX, scaleY float64, img image.Image, 
 
 }
 
+func (p *TK) CenterEnlargeImage(imgA image.Image, optsA ...string) image.Image {
+	widthT := imgA.Bounds().Dx()
+	heightT := imgA.Bounds().Dy()
+
+	toWidthT := ToInt(GetSwitch(optsA, "-width=", "256"), 256)
+	toHeightT := ToInt(GetSwitch(optsA, "-height=", "256"), 256)
+
+	colorStrT := GetSwitch(optsA, "-color=", "#000000")
+
+	if colorStrT == "" {
+		colorStrT = "#000000"
+	}
+
+	r, g, b, a := ParseHexColor(colorStrT)
+
+	colorT := color.NRGBA{uint8(r), uint8(g), uint8(b), uint8(a)}
+
+	destImageT := image.NewRGBA(image.Rectangle{Min: image.Point{X: 0, Y: 0}, Max: image.Point{X: toWidthT, Y: toHeightT}})
+
+	fillStartX := (toWidthT - widthT) / 2
+	fillEndX := fillStartX + widthT
+
+	fillStartY := (toHeightT - heightT) / 2
+	fillEndY := fillStartY + heightT
+
+	// Pln("fillStartX: ", fillStartX, "fillEndX: ", fillEndX, "fillStartY: ", fillStartY, "fillEndY: ", fillEndY)
+
+	for y := 0; y < toHeightT; y++ {
+		for x := 0; x < toWidthT; x++ {
+			if x >= fillStartX && y >= fillStartY && x <= fillEndX && y <= fillEndY {
+				destImageT.Set(x, y, imgA.At(x-fillStartX, y-fillStartY))
+			} else {
+				destImageT.Set(x, y, colorT)
+			}
+		}
+	}
+
+	return destImageT
+}
+
+var CenterEnlargeImage = TKX.CenterEnlargeImage
+
+func (p *TK) ResizeImageX(imgA image.Image, optsA ...string) image.Image {
+	widthT := ToInt(GetSwitch(optsA, "-width=", "256"), 256)
+	heightT := ToInt(GetSwitch(optsA, "-height=", "256"), 256)
+
+	return ResizeImage(widthT, heightT, imgA)
+}
+
+var ResizeImageX = TKX.ResizeImageX
+
 func (p *TK) ResizeImage(widthA, heightA int, img image.Image, interpA ...InterpolationFunction) image.Image {
 	width := uint(widthA)
 	height := uint(heightA)
@@ -27739,16 +27796,25 @@ func (pA *TK) NewImage(argsA ...string) image.Image {
 	widthT := ToInt(GetSwitch(argsA, "-width=", "100"), 100)
 	heightT := ToInt(GetSwitch(argsA, "-height=", "100"), 100)
 
-	colorT := GetSwitch(argsA, "-color=", "#FFFFFF")
+	colorStrT := GetSwitch(argsA, "-color=", "#000000")
 
-	if colorT == "" {
-
+	if colorStrT == "" {
+		colorStrT = "#000000"
 	}
 
 	imgT := image.NewRGBA(image.Rectangle{Min: image.Point{X: 0, Y: 0}, Max: image.Point{X: widthT, Y: heightT}})
 
-	return imgT
+	r, g, b, a := ParseHexColor(colorStrT)
 
+	colorT := color.NRGBA{uint8(r), uint8(g), uint8(b), uint8(a)}
+
+	for x := 0; x < heightT; x++ {
+		for y := 0; y < widthT; y++ {
+			imgT.Set(x, y, colorT)
+		}
+	}
+
+	return imgT
 }
 
 var NewImage = TKX.NewImage

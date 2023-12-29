@@ -4857,7 +4857,7 @@ func (pA *TK) FormatTime(timeA time.Time, formatA ...string) string {
 
 	if formatT == "" {
 		formatT = "2006-01-02 15:04:05"
-	} else if formatT == "compact" {
+	} else if formatT == "compact" || formatT == "-compact" {
 		formatT = TimeFormatCompact
 	}
 

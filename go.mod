@@ -22,10 +22,10 @@ require (
 	github.com/topxeq/uuid v0.0.0-20210318003930-0d149e412ca1
 	github.com/topxeq/xmlx v0.3.0
 	github.com/yeka/zip v0.0.0-20180914125537-d046722c6feb
-	golang.org/x/crypto v0.14.0
+	golang.org/x/crypto v0.18.0
 	golang.org/x/image v0.13.0
 	golang.org/x/net v0.17.0
-	golang.org/x/term v0.13.0
+	golang.org/x/term v0.16.0
 )
 
 require (
@@ -44,8 +44,8 @@ require (
 	github.com/stretchr/testify v1.8.1 // indirect
 	github.com/topxeq/countingwriter v0.0.0-20230115115152-84660be6de09 // indirect
 	github.com/xi2/xz v0.0.0-20171230120015-48954b6210f8 // indirect
-	golang.org/x/sys v0.13.0 // indirect
-	golang.org/x/text v0.13.0 // indirect
+	golang.org/x/sys v0.16.0 // indirect
+	golang.org/x/text v0.14.0 // indirect
 )
 
 require (

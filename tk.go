@@ -22678,6 +22678,25 @@ func (p *SimpleStack) PeekLayer(idxA int) interface{} {
 	return rs
 }
 
+// use index -1 to set the topmost item in the stack, -2 as the second topmost item, and so on
+func (p *SimpleStack) SetByIndex(idxA int, vA interface{}) error {
+	if idxA < 0 {
+		idxA = p.Size() - idxA
+	}
+
+	if p.Pointer < 1 {
+		return fmt.Errorf("invalid pointer: %v", p.Pointer)
+	}
+
+	if idxA >= p.Pointer {
+		return fmt.Errorf("index out of range: %v/%v", idxA, p.Pointer)
+	}
+
+	p.Items[idxA] = vA
+
+	return nil
+}
+
 func (p *SimpleStack) Size() int {
 	return p.Pointer
 }

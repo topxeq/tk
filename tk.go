@@ -59,6 +59,7 @@ import (
 	"unsafe"
 
 	"golang.org/x/image/bmp"
+	"golang.org/x/image/draw"
 	"golang.org/x/term"
 
 	"github.com/eiannone/keyboard"
@@ -26416,6 +26417,60 @@ func (pA *TK) LoadImageFromBytes(dataA []byte, argsA ...string) interface{} {
 
 var LoadImageFromBytes = TKX.LoadImageFromBytes
 
+func (pA *TK) LoadImageFromFile(pathA string, argsA ...string) interface{} {
+	var imgT image.Image = nil
+	var errT error
+
+	var fileT *os.File
+
+	fileT, errT = os.Open(pathA)
+
+	if errT != nil {
+		return errT
+	}
+
+	defer fileT.Close()
+
+	readerT := bufio.NewReader(fileT)
+
+	extT := strings.ToLower(filepath.Ext(pathA))
+
+	typeT := GetSwitch(argsA, "-type=", extT)
+
+	switch typeT {
+	case "", ".jpg", ".jpeg":
+		imgT, errT = jpeg.Decode(readerT)
+
+		if errT != nil {
+			return errT
+		}
+	case ".png":
+		imgT, errT = png.Decode(readerT)
+
+		if errT != nil {
+			return errT
+		}
+	case ".gif":
+		imgT, errT = gif.Decode(readerT)
+
+		if errT != nil {
+			return errT
+		}
+	case ".bmp":
+		imgT, errT = bmp.Decode(readerT)
+
+		if errT != nil {
+			return errT
+		}
+	default:
+		return fmt.Errorf("unsupported image type")
+	}
+
+	return imgT
+}
+
+var LoadImageFromFile = TKX.LoadImageFromFile
+
 type InterpolationFunction int
 
 // InterpolationFunction constants
@@ -27773,6 +27828,75 @@ func (p *TK) ResizeImage(widthA, heightA int, img image.Image, interpA ...Interp
 }
 
 var ResizeImage = TKX.ResizeImage
+
+func (pA *TK) ResizeImageQuick(imgA image.Image, newWidthA int, newHeightA int) image.Image {
+	srcBounds := imgA.Bounds()
+	srcWidth := srcBounds.Dx()
+	srcHeight := srcBounds.Dy()
+
+	// Calculate the aspect ratio of the source image
+	srcAspectRatio := float64(srcWidth) / float64(srcHeight)
+
+	if newWidthA < 1 && newHeightA < 1 {
+		newWidthA = srcWidth
+		newHeightA = srcHeight
+	} else if newWidthA < 1 {
+		newWidthA = int(float64(newHeightA) * srcAspectRatio)
+	} else if newHeightA < 1 {
+		newHeightA = int(float64(newWidthA) / srcAspectRatio)
+	}
+
+	// Calculate the target width and height while maintaining the aspect ratio
+	var targetWidth, targetHeight int
+	if float64(newWidthA)/float64(newHeightA) > srcAspectRatio {
+		targetWidth = int(float64(newHeightA) * srcAspectRatio)
+		targetHeight = newHeightA
+	} else {
+		targetWidth = newWidthA
+		targetHeight = int(float64(newWidthA) / srcAspectRatio)
+	}
+
+	imgT := image.NewRGBA(image.Rect(0, 0, targetWidth, targetHeight))
+
+	draw.CatmullRom.Scale(imgT, imgT.Rect, imgA, srcBounds, draw.Over, nil)
+
+	return imgT
+}
+
+var ResizeImageQuick = TKX.ResizeImageQuick
+
+// this function is highly inspired from github.com/1-ashraful-islam/image2ascii, thanks
+func (pA *TK) ImageToAscii(imageA image.Image, widthA int, heightA int) interface{} {
+
+	// Resize the image to half the height as we're going to use half-blocks to represent two vertical pixels.
+	resizedImgT := ResizeImageQuick(imageA, widthA, heightA) // Adjust width and height as needed
+
+	asciiImageT := make([]string, 0)
+
+	for y := resizedImgT.Bounds().Min.Y; y < resizedImgT.Bounds().Max.Y; y += 2 {
+		var line string
+		for x := resizedImgT.Bounds().Min.X; x < resizedImgT.Bounds().Max.X; x++ {
+			topPixelColor := resizedImgT.At(x, y)
+			bottomPixelColor := color.RGBA{255, 255, 255, 255} // Default to white if bottom pixel exceeds image bounds
+			if y+1 < resizedImgT.Bounds().Max.Y {
+				bottomPixelColor, _ = resizedImgT.At(x, y+1).(color.RGBA)
+			}
+
+			// Extract RGBA components for top and bottom pixels
+			r1, g1, b1, _ := topPixelColor.RGBA()
+			r2, g2, b2, _ := bottomPixelColor.RGBA()
+
+			// Print the half-block with top color as foreground and bottom color as background
+			line += fmt.Sprintf("\x1b[38;2;%d;%d;%dm\x1b[48;2;%d;%d;%dm▀\x1b[0m", r1>>8, g1>>8, b1>>8, r2>>8, g2>>8, b2>>8)
+		}
+
+		asciiImageT = append(asciiImageT, line)
+	}
+
+	return asciiImageT
+}
+
+var ImageToAscii = TKX.ImageToAscii
 
 func (pA *TK) ThumbImage(imgA image.Image, maxWidthA int, maxHeightA int) image.Image {
 	if imgA == nil {

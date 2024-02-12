@@ -26471,6 +26471,74 @@ func (pA *TK) LoadImageFromFile(pathA string, argsA ...string) interface{} {
 
 var LoadImageFromFile = TKX.LoadImageFromFile
 
+func (p *TK) SaveImageToFile(imageA image.Image, filePathA string, formatA ...string) error {
+	fileT, errT := os.Create(filePathA)
+	if errT != nil {
+		return errT
+	}
+	defer fileT.Close()
+
+	var formatT string
+
+	if formatA == nil || len(formatA) < 1 {
+		formatT = ".png"
+	} else {
+		formatT = strings.ToLower(formatA[0])
+	}
+
+	switch formatT {
+	case "", ".png":
+		errT = png.Encode(fileT, imageA)
+	case ".jpg", ".jpeg":
+		errT = jpeg.Encode(fileT, imageA, nil)
+	case ".gif":
+		errT = gif.Encode(fileT, imageA, nil)
+	case ".bmp":
+		errT = bmp.Encode(fileT, imageA)
+	default:
+		errT = png.Encode(fileT, imageA)
+	}
+
+	return errT
+}
+
+var SaveImageToFile = TKX.SaveImageToFile
+
+func (p *TK) SaveImageToBytes(imageA image.Image, formatA ...string) []byte {
+	var bufT = new(bytes.Buffer)
+
+	var formatT string
+
+	var errT error
+
+	if formatA == nil || len(formatA) < 1 {
+		formatT = ".png"
+	} else {
+		formatT = strings.ToLower(formatA[0])
+	}
+
+	switch formatT {
+	case "", ".png":
+		errT = png.Encode(bufT, imageA)
+	case ".jpg", ".jpeg":
+		errT = jpeg.Encode(bufT, imageA, nil)
+	case ".gif":
+		errT = gif.Encode(bufT, imageA, nil)
+	case ".bmp":
+		errT = bmp.Encode(bufT, imageA)
+	default:
+		errT = png.Encode(bufT, imageA)
+	}
+
+	if errT != nil {
+		return nil
+	}
+
+	return bufT.Bytes()
+}
+
+var SaveImageToBytes = TKX.SaveImageToBytes
+
 type InterpolationFunction int
 
 // InterpolationFunction constants
@@ -27829,6 +27897,7 @@ func (p *TK) ResizeImage(widthA, heightA int, img image.Image, interpA ...Interp
 
 var ResizeImage = TKX.ResizeImage
 
+// ResizeImageQuick set width or height < 1, will keep ratio, otherwise as new width and height
 func (pA *TK) ResizeImageQuick(imgA image.Image, newWidthA int, newHeightA int) image.Image {
 	srcBounds := imgA.Bounds()
 	srcWidth := srcBounds.Dx()
@@ -27844,6 +27913,12 @@ func (pA *TK) ResizeImageQuick(imgA image.Image, newWidthA int, newHeightA int) 
 		newWidthA = int(float64(newHeightA) * srcAspectRatio)
 	} else if newHeightA < 1 {
 		newHeightA = int(float64(newWidthA) / srcAspectRatio)
+	} else {
+		imgT := image.NewRGBA(image.Rect(0, 0, newWidthA, newHeightA))
+
+		draw.CatmullRom.Scale(imgT, imgT.Rect, imgA, srcBounds, draw.Over, nil)
+
+		return imgT
 	}
 
 	// Calculate the target width and height while maintaining the aspect ratio

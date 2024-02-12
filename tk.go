@@ -2382,7 +2382,7 @@ func (v StringRing) String() string {
 	return rs
 }
 
-// ByteQueue
+// ByteQueue(default size 10, set to -1 for infinite)
 
 type ByteQueueItem struct {
 	Prev  *ByteQueueItem
@@ -2437,16 +2437,18 @@ func (p *ByteQueue) Size() int {
 }
 
 func (p *ByteQueue) Push(byteA byte) {
-	if p.SizeM >= p.CapM {
-		if p.SizeM == 1 {
-			p.Head = nil
-			p.Tail = nil
-		} else {
-			p.Head = p.Head.Next
-			p.Head.Prev = nil
-		}
+	if p.CapM >= 0 {
+		if p.SizeM >= p.CapM {
+			if p.SizeM == 1 {
+				p.Head = nil
+				p.Tail = nil
+			} else {
+				p.Head = p.Head.Next
+				p.Head.Prev = nil
+			}
 
-		p.SizeM--
+			p.SizeM--
+		}
 	}
 
 	itemT := &ByteQueueItem{Value: byteA}
@@ -2468,16 +2470,18 @@ func (p *ByteQueue) Insert(idxA int, byteA byte) error {
 		return fmt.Errorf("out of index: %v/%v", idxA, p.Size())
 	}
 
-	if p.SizeM >= p.CapM {
-		if p.SizeM == 1 {
-			p.Head = nil
-			p.Tail = nil
-		} else {
-			p.Tail = p.Tail.Prev
-			p.Tail.Next = nil
-		}
+	if p.CapM >= 0 {
+		if p.SizeM >= p.CapM {
+			if p.SizeM == 1 {
+				p.Head = nil
+				p.Tail = nil
+			} else {
+				p.Tail = p.Tail.Prev
+				p.Tail.Next = nil
+			}
 
-		p.SizeM--
+			p.SizeM--
+		}
 	}
 
 	itemT := &ByteQueueItem{Value: byteA}
@@ -2734,7 +2738,7 @@ func (v AnyQueueItem) String() string {
 	return fmt.Sprintf("%v", v.Value)
 }
 
-// A queue with size limit
+// A queue with size limit(default 10, set to -1 for infinite)
 type AnyQueue struct {
 	Head  *AnyQueueItem
 	Tail  *AnyQueueItem
@@ -2809,16 +2813,18 @@ func (p *AnyQueue) Insert(idxA int, byteA interface{}) error {
 		return fmt.Errorf("out of index: %v/%v", idxA, p.Size())
 	}
 
-	if p.SizeM >= p.CapM {
-		if p.SizeM == 1 {
-			p.Head = nil
-			p.Tail = nil
-		} else {
-			p.Tail = p.Tail.Prev
-			p.Tail.Next = nil
-		}
+	if p.CapM >= 0 {
+		if p.SizeM >= p.CapM {
+			if p.SizeM == 1 {
+				p.Head = nil
+				p.Tail = nil
+			} else {
+				p.Tail = p.Tail.Prev
+				p.Tail.Next = nil
+			}
 
-		p.SizeM--
+			p.SizeM--
+		}
 	}
 
 	itemT := &AnyQueueItem{Value: byteA}
@@ -2925,6 +2931,24 @@ func (p *AnyQueue) Remove(idxA int) error {
 	return nil
 }
 
+func (p *AnyQueue) SetByIndex(idxA int, valueA interface{}) error {
+	if idxA < 0 || idxA >= p.Size() {
+		return fmt.Errorf("out of index: %v/%v", idxA, p.Size())
+	}
+
+	currentT := p.Head
+	cntT := 0
+
+	for cntT < idxA {
+		currentT = currentT.Next
+		cntT++
+	}
+
+	currentT.Value = valueA
+
+	return nil
+}
+
 // no indexA to get first item, indexA < 0 to get the last item
 func (p *AnyQueue) Get(indexA ...int) interface{} {
 	var idxT int
@@ -2986,7 +3010,7 @@ func (p *AnyQueue) Pop() interface{} {
 	return rs
 }
 
-// pick and pop the last item
+// pick and pop the first item
 func (p *AnyQueue) Pick() interface{} {
 	sizeT := p.Size()
 	if sizeT < 1 {

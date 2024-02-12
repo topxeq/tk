@@ -12256,6 +12256,18 @@ func (pA *TK) DecryptDataByTXDEE(srcDataA []byte, codeA string) []byte {
 
 var DecryptDataByTXDEE = TKX.DecryptDataByTXDEE
 
+func (pA *TK) IsDataEncryptedByTXDEF(srcDataA []byte) bool {
+	return bytes.HasPrefix(srcDataA, []byte("//TXDEF#"))
+}
+
+var IsDataEncryptedByTXDEF = TKX.IsDataEncryptedByTXDEF
+
+func (pA *TK) IsStringEncryptedByTXDEF(strA string) bool {
+	return strings.HasPrefix(strA, "//TXDEF#")
+}
+
+var IsStringEncryptedByTXDEF = TKX.IsStringEncryptedByTXDEF
+
 func (pA *TK) DecryptDataByTXDEF(srcDataA []byte, codeA ...string) []byte {
 	if srcDataA == nil {
 		return nil
@@ -26382,6 +26394,8 @@ func (pA *TK) LoadImageFromBytes(dataA []byte, argsA ...string) interface{} {
 	readerT := bytes.NewReader(dataA)
 
 	typeT := GetSwitch(argsA, "-type=", "")
+
+	typeT = strings.TrimPrefix(typeT, ".")
 
 	switch typeT {
 	case "", "jpg", "jpeg":

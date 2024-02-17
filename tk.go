@@ -3045,8 +3045,15 @@ func (v AnyQueue) String() string {
 
 	currentT := v.Head
 
+	firstT := true
+
 	for currentT != nil {
-		bufT.WriteString(fmt.Sprintf(" %v", currentT))
+		if firstT {
+			firstT = false
+			bufT.WriteString(fmt.Sprintf("%v", currentT))
+		} else {
+			bufT.WriteString(fmt.Sprintf(" %v", currentT))
+		}
 
 		currentT = currentT.Next
 	}

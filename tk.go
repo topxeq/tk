@@ -1125,6 +1125,37 @@ func (pA *TK) LimitString(strA string, lenA int, optsA ...string) string {
 	suffixT := GetSwitch(optsA, "-suffix=", "...")
 	fromEndT := IfSwitchExists(optsA, "-end")
 
+	runeT := IfSwitchExists(optsA, "-rune")
+
+	if runeT {
+		runeStrT := []rune(strA)
+
+		var sb strings.Builder
+
+		if !fromEndT {
+			for i, v := range runeStrT {
+				sb.WriteRune(v)
+
+				if sb.Len() > lenA {
+					return string(runeStrT[:i]) + suffixT
+				}
+			}
+
+			return strA + suffixT
+		} else {
+			lenT := len(runeStrT)
+			for i := lenT - 1; i >= 0; i-- {
+				sb.WriteRune(runeStrT[i])
+
+				if sb.Len() > lenA {
+					return string(runeStrT[i+1:]) + suffixT
+				}
+			}
+
+			return strA + suffixT
+		}
+	}
+
 	lenT := len(strA)
 
 	diffT := lenT - lenA
@@ -28085,3 +28116,126 @@ func (pA *TK) NewImage(argsA ...string) image.Image {
 }
 
 var NewImage = TKX.NewImage
+
+// base on github.com/gezhengbin888/similarity_compare
+
+func CalTextSimilarity(str1A string, str2A string) float64 {
+	if str1A == str2A {
+		return 1.0
+	}
+
+	return (calcScoreMain(str1A, str2A) + calcScoreMain(str1A, str2A)) / 2
+}
+
+func calcScoreMain(s_new string, s_old string) float64 {
+	newLen := utf8.RuneCountInString(s_new)
+	oldLen := utf8.RuneCountInString(s_old)
+	newSLen := len(s_new)
+	oldSLen := len(s_old)
+	score := 0.0
+	sOneNew := ""
+	for i := 0; i < newLen; i++ {
+		prefix := []rune(s_new)[i : i+1]
+		// 将子串之前的字符串转换成[]rune
+		sOneNew += string(prefix)
+		strIndex := strings.Index(s_old, sOneNew)
+		if strIndex == -1 {
+			if utf8.RuneCountInString(sOneNew) >= 2 { //没找到且是连续2个字符以上的 截取前n-1个字符计算
+
+				prefix1 := []rune(sOneNew)[0 : utf8.RuneCountInString(sOneNew)-1]
+				// 将子串之前的字符串转换成[]rune
+				contailStr := string(prefix1)
+				score = calcScore(contailStr, score, strings.LastIndex(s_old, contailStr), strings.LastIndex(s_new, contailStr), newLen, oldLen, newSLen, oldSLen)
+				i = i - 1
+			}
+			sOneNew = ""
+		} else {
+			if i == (newLen - 1) { //找到且是最后一个字符  直接拿来计算
+				//fmt.Println(s_old,s_new, sOneNew,strings.Index(s_old,sOneNew), strings.Index(s_new,sOneNew) )
+				score = calcScore(sOneNew, score, strings.LastIndex(s_old, sOneNew), strings.LastIndex(s_new, sOneNew), newLen, oldLen, newSLen, oldSLen)
+			}
+		}
+	}
+	return score
+}
+
+func calcScore(contailStr string, score float64, strIndexOld int, strIndexNew int, newLen int, oldLen int, newSLen int, oldSLen int) float64 {
+	contailStrLen := utf8.RuneCountInString(contailStr)
+	/*积分增加项= 长度匹配量 * 长度占比 越长越接近1*/
+	asd := float64(contailStrLen) / (float64((newLen + oldLen)) / 2) * (float64(contailStrLen) / float64(contailStrLen+1))
+	//fmt.Println(utils.Typeof(asd))
+	//.Println(asd)
+	score += asd
+	pian := math.Abs(float64(strIndexOld - strIndexNew))
+	if pian != 0 {
+		xi := pian / float64((newSLen+oldSLen)/2)
+		asff := (asd * xi) / 6 //宽松度 越大越不敏感 越大分数越大  越不严格
+		if asff < asd {
+			score -= asff
+		}
+	}
+	return score
+}
+
+// based on github.com/dzstudio/similar-text
+
+// return the len of longest string both in str1 and str2 and the positions in str1 and str2
+func SimilarStr(str1 []rune, str2 []rune) (int, int, int) {
+	var maxLen, tmp, pos1, pos2 = 0, 0, 0, 0
+	len1, len2 := len(str1), len(str2)
+
+	for p := 0; p < len1; p++ {
+		for q := 0; q < len2; q++ {
+			tmp = 0
+			for p+tmp < len1 && q+tmp < len2 && str1[p+tmp] == str2[q+tmp] {
+				tmp++
+			}
+			if tmp > maxLen {
+				maxLen, pos1, pos2 = tmp, p, q
+			}
+		}
+
+	}
+
+	return maxLen, pos1, pos2
+}
+
+// return the total length of longest string both in str1 and str2
+func SimilarChar(str1 []rune, str2 []rune) int {
+	maxLen, pos1, pos2 := SimilarStr(str1, str2)
+	total := maxLen
+
+	if maxLen != 0 {
+		if pos1 > 0 && pos2 > 0 {
+			total += SimilarChar(str1[:pos1], str2[:pos2])
+		}
+		if pos1+maxLen < len(str1) && pos2+maxLen < len(str2) {
+			total += SimilarChar(str1[pos1+maxLen:], str2[pos2+maxLen:])
+		}
+	}
+
+	return total
+}
+
+// return a int value in [0, 100], which stands for match level
+func SimilarText(str1 string, str2 string) int {
+	txt1, txt2 := []rune(str1), []rune(str2)
+	if len(txt1) == 0 || len(txt2) == 0 {
+		return 0
+	}
+	return SimilarChar(txt1, txt2) * 200 / (len(txt1) + len(txt2))
+}
+
+func GetTextSimilarity(str1A string, str2A string, methodA ...int) float64 {
+	methodT := 0
+
+	if len(methodA) > 0 {
+		methodT = methodA[0]
+	}
+
+	if methodT == 1 {
+		return float64(SimilarText(str1A, str2A)) / 100.0
+	}
+
+	return CalTextSimilarity(str1A, str2A)
+}

@@ -9028,6 +9028,10 @@ func (pA *TK) OpenFile(filePathT string, optsA ...string) interface{} {
 		flagT = flagT | os.O_APPEND
 	}
 
+	if IfSwitchExistsWhole(optsA, "-truncate") {
+		flagT = flagT | os.O_TRUNC
+	}
+
 	permT := OctetToInt(GetSwitch(optsA, "-perm=", "0777"), 0777)
 
 	fileT, errT := os.OpenFile(filePathT, flagT, fs.FileMode(permT))

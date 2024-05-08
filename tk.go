@@ -8225,9 +8225,9 @@ func (pA *TK) ToInt(v interface{}, defaultA ...int) (result int) {
 		}
 	}()
 
-	switch v.(type) {
+	switch nv := v.(type) {
 	case bool:
-		if v.(bool) {
+		if nv {
 			result = 1
 		} else {
 			result = 0
@@ -8235,43 +8235,43 @@ func (pA *TK) ToInt(v interface{}, defaultA ...int) (result int) {
 
 		return
 	case int:
-		result = v.(int)
+		result = nv
 		return
 	case int8:
-		result = int(v.(int8))
+		result = int(nv)
 		return
 	case int16:
-		result = int(v.(int16))
+		result = int(nv)
 		return
 	case int32:
-		result = int(v.(int32))
+		result = int(nv)
 		return
 	case int64:
-		result = int(v.(int64))
+		result = int(nv)
 		return
 	case uint:
-		result = int(v.(int))
+		result = int(nv)
 		return
 	case uint8:
-		result = int(v.(uint8))
+		result = int(nv)
 		return
 	case uint16:
-		result = int(v.(uint16))
+		result = int(nv)
 		return
 	case uint32:
-		result = int(v.(uint32))
+		result = int(nv)
 		return
 	case uint64:
-		result = int(v.(uint64))
+		result = int(nv)
 		return
 	case float64:
-		result = int(v.(float64))
+		result = int(nv)
 		return
 	case float32:
-		result = int(v.(float32))
+		result = int(nv)
 		return
 	case string:
-		nT, errT := strconv.ParseInt(strings.TrimSpace(v.(string)), 10, 0)
+		nT, errT := strconv.ParseInt(strings.TrimSpace(nv), 10, 0)
 		if errT != nil {
 			result = defaultT
 			return
@@ -8280,7 +8280,10 @@ func (pA *TK) ToInt(v interface{}, defaultA ...int) (result int) {
 		result = int(nT)
 		return
 	case time.Duration:
-		result = int(v.(time.Duration))
+		result = int(nv)
+		return
+	case time.Weekday:
+		result = int(nv)
 		return
 	default:
 		nT, errT := strconv.ParseInt(fmt.Sprintf("%v", v), 10, 0)
